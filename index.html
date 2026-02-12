@@ -6,9 +6,10 @@
     <title>TechFreedom — See your technology clearly</title>
     <meta name="description" content="TechFreedom helps organisations understand their technology dependencies and start making informed choices.">
     <script defer data-domain="techfreedom.netlify.app" src="https://plausible.io/js/script.js"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=DM+Sans:ital,opsz,wght@0,9..40,300..700;1,9..40,300..700&display=swap" rel="stylesheet">
+    <!-- Privacy-friendly fonts (Bunny Fonts) -->
+<link rel="preconnect" href="https://fonts.bunny.net">
+<link href="https://fonts.bunny.net/css?family=dm-sans:400,400i,500,500i,700,700i&display=swap" rel="stylesheet" />
+<link href="https://fonts.bunny.net/css?family=fraunces:300,300i,400,400i,500,500i,600,600i,700,700i,800,800i&display=swap" rel="stylesheet" />
     <style>
         /* ========================================
            CSS CUSTOM PROPERTIES
@@ -30,8 +31,8 @@
             --white: #FFFFFF;
             --horizon: rgba(26, 35, 50, 0.06);
 
-            --font-display: 'Fraunces', Georgia, serif;
-            --font-body: 'DM Sans', system-ui, sans-serif;
+            --font-display: 'Fraunces', serif;
+            --font-body: 'DM Sans', sans-serif;
 
             --measure: 680px;
             --measure-wide: 920px;
@@ -55,6 +56,12 @@
         html {
             scroll-behavior: smooth;
             -webkit-text-size-adjust: 100%;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            html {
+                scroll-behavior: auto;
+            }
         }
 
         body {
@@ -84,6 +91,30 @@
             background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
             background-repeat: repeat;
             background-size: 200px 200px;
+        }
+
+        /* ========================================
+           SKIP LINK
+           ======================================== */
+        .skip-link {
+            position: absolute;
+            top: 0.5rem;
+            left: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            background: var(--white);
+            color: var(--text-primary);
+            border: 2px solid currentColor;
+            border-radius: 0.25rem;
+            font-weight: 500;
+            text-decoration: none;
+            transform: translateY(-200%);
+            z-index: 10000;
+        }
+
+        .skip-link:focus {
+            transform: translateY(0);
+            outline: 2px solid var(--accent-sky);
+            outline-offset: 2px;
         }
 
         /* ========================================
@@ -164,9 +195,6 @@
                 transform: none !important;
                 animation: none !important;
             }
-            .cta-button {
-                animation: none !important;
-            }
             .scroll-hint {
                 animation: none !important;
             }
@@ -199,7 +227,6 @@
             overflow: hidden;
         }
 
-        /* Atmospheric gradient layers */
         .hero::before {
             content: '';
             position: absolute;
@@ -214,7 +241,6 @@
             z-index: 0;
         }
 
-        /* Fog layer that clears */
         .hero-fog {
             position: absolute;
             top: 0;
@@ -237,7 +263,6 @@
             100% { opacity: 0; }
         }
 
-        /* Atmospheric SVG artwork */
         .hero-atmosphere {
             position: absolute;
             top: 0;
@@ -260,7 +285,7 @@
             right: -5%;
             width: clamp(300px, 40vw, 600px);
             animation-delay: 0.8s;
-            color: rgba(74, 144, 217, 0.09);
+            color: rgba(74, 143, 217, 0.216);
         }
 
         .hero-cloud--2 {
@@ -268,7 +293,7 @@
             left: -8%;
             width: clamp(250px, 35vw, 500px);
             animation-delay: 1.2s;
-            color: rgba(212, 168, 67, 0.06);
+            color: rgba(212, 168, 67, 0.241);
         }
 
         .hero-cloud--3 {
@@ -276,10 +301,9 @@
             right: 8%;
             width: clamp(180px, 22vw, 350px);
             animation-delay: 1.6s;
-            color: rgba(74, 144, 217, 0.06);
+            color: rgba(74, 143, 217, 0.192);
         }
 
-        /* Light rays from upper right */
         .hero-rays {
             position: absolute;
             top: -10%;
@@ -288,7 +312,7 @@
             height: clamp(400px, 50vw, 800px);
             opacity: 0;
             animation: raysReveal 4s cubic-bezier(0.23, 1, 0.32, 1) 1.5s forwards;
-            color: rgba(212, 168, 67, 0.045);
+            color: rgba(212, 168, 67, 0.26);
         }
 
         @keyframes cloudReveal {
@@ -301,7 +325,6 @@
             100% { opacity: 0.8; }
         }
 
-        /* Subtle cloud drift */
         .hero-cloud--1 { animation: cloudReveal 3s cubic-bezier(0.23, 1, 0.32, 1) 0.8s forwards, cloudDrift1 20s ease-in-out 3.8s infinite; }
         .hero-cloud--2 { animation: cloudReveal 3s cubic-bezier(0.23, 1, 0.32, 1) 1.2s forwards, cloudDrift2 25s ease-in-out 4.2s infinite; }
         .hero-cloud--3 { animation: cloudReveal 3s cubic-bezier(0.23, 1, 0.32, 1) 1.6s forwards, cloudDrift3 22s ease-in-out 4.6s infinite; }
@@ -319,32 +342,6 @@
             50% { transform: translateX(10px); }
         }
 
-        /* Pillar icons */
-        .pillar-icon {
-            width: 48px;
-            height: 48px;
-            margin-bottom: var(--space-s);
-            color: var(--accent-sky);
-            opacity: 0.6;
-        }
-
-        .pillar-icon svg {
-            width: 100%;
-            height: 100%;
-        }
-
-        @media (min-width: 1024px) {
-            .pillar-icon {
-                grid-column: 1;
-                grid-row: 1;
-                margin-bottom: var(--space-m);
-            }
-
-            .pillar-number {
-                grid-row: 2 / -1;
-            }
-        }
-
         @media (max-width: 768px) {
             .hero-cloud, .hero-rays {
                 display: none;
@@ -357,9 +354,12 @@
                 animation: none !important;
                 transform: none !important;
             }
+            .hero-fog {
+                animation: none !important;
+                opacity: 0 !important;
+            }
         }
 
-        /* Horizon line */
         .hero-horizon {
             position: absolute;
             bottom: 0;
@@ -436,8 +436,20 @@
             color: var(--text-secondary);
             font-size: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
             line-height: 1.8;
+        }
+
+        .hero-intro p {
             opacity: 0;
-            animation: fadeUp 1s cubic-bezier(0.23, 1, 0.32, 1) 1.4s forwards;
+            animation: fadeUp 1s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+        }
+
+        .hero-intro p:first-child {
+            animation-delay: 1.4s;
+            margin-bottom: 1em;
+        }
+
+        .hero-intro p:last-child {
+            animation-delay: 1.6s;
         }
 
         @keyframes fadeUp {
@@ -451,7 +463,6 @@
             }
         }
 
-        /* Scroll hint */
         .scroll-hint {
             position: absolute;
             bottom: var(--space-l);
@@ -511,6 +522,7 @@
         .pillars {
             position: relative;
             padding: var(--space-l) 0;
+            list-style: none;
         }
 
         .pillar {
@@ -523,7 +535,6 @@
             border-top: 1px solid var(--horizon);
         }
 
-        /* Large decorative background number */
         .pillar-bg-number {
             position: absolute;
             top: 50%;
@@ -543,6 +554,19 @@
         .pillar:nth-child(2) .pillar-bg-number {
             right: auto;
             left: -5%;
+        }
+
+        .pillar-icon {
+            width: 48px;
+            height: 48px;
+            margin-bottom: var(--space-s);
+            color: var(--accent-sky);
+            opacity: 0.6;
+        }
+
+        .pillar-icon svg {
+            width: 100%;
+            height: 100%;
         }
 
         .pillar-number {
@@ -632,7 +656,6 @@
             );
         }
 
-        /* Atmospheric glow behind CTA area */
         .closing::before {
             content: '';
             position: absolute;
@@ -664,7 +687,6 @@
             margin-bottom: var(--space-l);
         }
 
-        /* Unified CTA area — form is the single action */
         .cta-area {
             margin-top: var(--space-m);
             padding: var(--space-l);
@@ -692,14 +714,17 @@
             line-height: 1.6;
         }
 
-        /* Email signup form */
         .signup-form .form-row {
             display: flex;
             gap: var(--space-xs);
         }
 
-        .signup-form input[type="email"] {
+        .signup-form label {
             flex: 1;
+        }
+
+        .signup-form input[type="email"] {
+            width: 100%;
             font-family: var(--font-body);
             font-size: 0.95rem;
             padding: 0.85em 1em;
@@ -763,14 +788,21 @@
             }
         }
 
-        .form-success {
-            display: none;
+        .form-success,
+        .form-error {
             font-family: var(--font-display);
             font-style: italic;
-            color: var(--accent-sky);
             font-size: 0.95rem;
             margin-top: var(--space-s);
             font-variation-settings: 'opsz' 24;
+        }
+
+        .form-success {
+            color: var(--accent-sky);
+        }
+
+        .form-error {
+            color: #D9534F;
         }
 
         /* ========================================
@@ -819,7 +851,6 @@
             flex-shrink: 0;
         }
 
-        /* Initial-based avatar — swap for <img> later */
         .team-avatar-initial {
             font-family: var(--font-display);
             font-size: 1.75rem;
@@ -830,7 +861,6 @@
             user-select: none;
         }
 
-        /* When using a real headshot image */
         .team-avatar img {
             width: 100%;
             height: 100%;
@@ -1052,27 +1082,25 @@
 </head>
 <body>
 
+    <a class="skip-link" href="#main-content">Skip to main content</a>
+
     <!-- ============ HERO ============ -->
-    <header class="hero" role="banner">
+    <header class="hero">
         <div class="hero-fog" aria-hidden="true"></div>
         <div class="hero-horizon" aria-hidden="true"></div>
 
-        <!-- Atmospheric SVG artwork -->
         <div class="hero-atmosphere" aria-hidden="true">
-            <!-- Cloud forms — abstract, organic shapes -->
-            <svg class="hero-cloud hero-cloud--1" viewBox="0 0 600 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <svg class="hero-cloud hero-cloud--1" viewBox="0 0 600 200" fill="none" xmlns="http://www.w3.org/2000/svg" focusable="false">
                 <path d="M50 160C50 160 80 40 200 60C320 80 280 20 400 40C520 60 560 120 540 160C520 200 100 200 50 160Z" fill="currentColor"/>
                 <path d="M120 170C120 170 140 80 240 95C340 110 310 65 400 80C490 95 520 140 505 170C490 200 150 195 120 170Z" fill="currentColor" opacity="0.5"/>
             </svg>
-            <svg class="hero-cloud hero-cloud--2" viewBox="0 0 500 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <svg class="hero-cloud hero-cloud--2" viewBox="0 0 500 180" fill="none" xmlns="http://www.w3.org/2000/svg" focusable="false">
                 <path d="M30 140C30 140 60 30 180 50C300 70 260 15 360 35C460 55 490 110 470 140C450 170 70 175 30 140Z" fill="currentColor"/>
             </svg>
-            <svg class="hero-cloud hero-cloud--3" viewBox="0 0 400 150" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <svg class="hero-cloud hero-cloud--3" viewBox="0 0 400 150" fill="none" xmlns="http://www.w3.org/2000/svg" focusable="false">
                 <path d="M20 120C20 120 45 25 140 40C235 55 210 10 290 28C370 46 395 90 380 120C365 150 50 148 20 120Z" fill="currentColor"/>
             </svg>
-
-            <!-- Light rays breaking through -->
-            <svg class="hero-rays" viewBox="0 0 800 800" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <svg class="hero-rays" viewBox="0 0 800 800" fill="none" xmlns="http://www.w3.org/2000/svg" focusable="false">
                 <path d="M800 0L400 800L350 800L800 50Z" fill="currentColor" opacity="0.6"/>
                 <path d="M800 80L500 800L450 800L800 130Z" fill="currentColor" opacity="0.4"/>
                 <path d="M800 180L580 800L530 800L800 230Z" fill="currentColor" opacity="0.3"/>
@@ -1082,14 +1110,14 @@
 
         <div class="section-inner">
             <p class="hero-eyebrow">A clearer forecast for your digital future</p>
-            <h1 class="hero-title">
-                <span class="word">Tech</span><span class="word">Freedom</span>
+            <h1 class="hero-title" aria-label="TechFreedom">
+                <span class="word" aria-hidden="true">TechFreedom</span>
             </h1>
             <p class="hero-tagline">See your technology clearly.</p>
-            <p class="hero-intro">
-                You cannot manage what you cannot see. Most organisations operate in a fog of invisible reliance; you rely on platforms that obscure their workings behind slick interfaces and terms you never read.
-<br><br>TechFreedom helps you clear the air. We give you the tools to look past Big Tech's version of the Cloud and build a digital infrastructure that is open, visible, and under your control..
-            </p>
+            <div class="hero-intro">
+                <p>You cannot manage what you cannot see. Most organisations operate in a fog of invisible reliance; you rely on platforms that obscure their workings behind slick interfaces and terms you never read.</p>
+                <p>TechFreedom helps you clear the air. We give you the tools to look past Big Tech's version of the Cloud and build a digital infrastructure that is open, visible, and under your control.</p>
+            </div>
         </div>
 
         <div class="scroll-hint" aria-hidden="true">
@@ -1098,27 +1126,26 @@
         </div>
     </header>
 
-    <main>
+    <main id="main-content" tabindex="-1">
         <!-- ============ TRANSITION ============ -->
         <section class="transition-section" aria-labelledby="transition-heading">
             <div class="section-inner">
                 <h2 id="transition-heading" class="reveal">Bring your operations into the light</h2>
                 <p class="reveal reveal-delay-1">
-                    Moving away from Big Tech is not about cutting yourself off. It is about knowing what you are working with. When you rely on US-based tech companies, you take on risks that are buried in the small print. We help you spot those risks, explore what your options are and find alternatives you can see and trust 
+                    Moving away from Big Tech is not about cutting yourself off. It is about knowing what you are working with. When you rely on US-based tech companies, you take on risks that are buried in the small print. We help you spot those risks, explore what your options are and find alternatives you can see and trust.
                 </p>
             </div>
         </section>
 
         <!-- ============ PILLARS ============ -->
-        <div class="pillars">
+        <ol class="pillars" role="list">
 
             <!-- Pillar 1: Jurisdiction -->
-            <section class="pillar" aria-labelledby="pillar-jurisdiction">
+            <li class="pillar" aria-labelledby="pillar-jurisdiction">
                 <span class="pillar-bg-number" aria-hidden="true">01</span>
                 <div class="section-inner">
                     <div class="pillar-icon reveal" aria-hidden="true">
-                        <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                            <!-- Globe with shield overlay — jurisdiction/sovereignty -->
+                        <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" focusable="false">
                             <circle cx="24" cy="24" r="16"/>
                             <ellipse cx="24" cy="24" rx="8" ry="16"/>
                             <path d="M8 24h32"/>
@@ -1144,15 +1171,14 @@
                         </p>
                     </div>
                 </div>
-            </section>
+            </li>
 
             <!-- Pillar 2: Business Continuity -->
-            <section class="pillar" aria-labelledby="pillar-continuity">
+            <li class="pillar" aria-labelledby="pillar-continuity">
                 <span class="pillar-bg-number" aria-hidden="true">02</span>
                 <div class="section-inner">
                     <div class="pillar-icon reveal" aria-hidden="true">
-                        <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                            <!-- Chain links — dependency/continuity -->
+                        <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" focusable="false">
                             <rect x="8" y="16" width="14" height="16" rx="7"/>
                             <rect x="26" y="16" width="14" height="16" rx="7"/>
                             <path d="M22 24h4"/>
@@ -1176,19 +1202,17 @@
                         </p>
                     </div>
                 </div>
-            </section>
+            </li>
 
             <!-- Pillar 3: Surveillance -->
-            <section class="pillar" aria-labelledby="pillar-surveillance">
+            <li class="pillar" aria-labelledby="pillar-surveillance">
                 <span class="pillar-bg-number" aria-hidden="true">03</span>
                 <div class="section-inner">
                     <div class="pillar-icon reveal" aria-hidden="true">
-                        <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                            <!-- Eye — surveillance/watching -->
+                        <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" focusable="false">
                             <path d="M4 24C4 24 12 12 24 12C36 12 44 24 44 24C44 24 36 36 24 36C12 36 4 24 4 24Z"/>
                             <circle cx="24" cy="24" r="6"/>
                             <circle cx="24" cy="24" r="2.5"/>
-                            <!-- Subtle scan lines -->
                             <path d="M24 12v-4" opacity="0.4"/>
                             <path d="M24 40v-4" opacity="0.4"/>
                             <path d="M12 16l-2-3" opacity="0.4"/>
@@ -1209,13 +1233,13 @@
                         <p>
                             You will learn to use tools that keep your information private and only share what you choose to share. We audit your tools for data collection practices, help you
                             understand what's being gathered, and identify privacy-respecting
-                            alternatives. 
+                            alternatives.
                         </p>
                     </div>
                 </div>
-            </section>
+            </li>
 
-        </div>
+        </ol>
 
         <!-- ============ CLOSING + CTA ============ -->
         <section class="closing" aria-labelledby="closing-heading">
@@ -1231,8 +1255,15 @@
                 <div class="cta-area reveal reveal-delay-2">
                     <p class="cta-heading">Join the next cohort</p>
                     <span class="cta-subtext">Sign up to be notified when the first cohort opens.</span>
-                    <form class="signup-form" id="signup" name="cohort-signup" method="POST" data-netlify="true" aria-label="Email notification signup">
+                    <form class="signup-form" id="signup" name="cohort-signup" method="POST" action="/" data-netlify="true" netlify-honeypot="bot-field">
+                        <input type="hidden" name="form-name" value="cohort-signup">
+                        
+                        <p class="visually-hidden">
+                            <label>Do not fill this in: <input name="bot-field" autocomplete="off" tabindex="-1"></label>
+                        </p>
+
                         <div class="form-row">
+                            <label for="email-input" class="visually-hidden">Email address</label>
                             <input
                                 type="email"
                                 id="email-input"
@@ -1240,80 +1271,92 @@
                                 placeholder="you@organisation.org"
                                 required
                                 autocomplete="email"
-                                aria-label="Your email address"
+                                inputmode="email"
                                 aria-describedby="email-note"
                             >
                             <button type="submit">Notify me</button>
                         </div>
-                        <p class="form-success" id="form-success" role="status">Thank you — we'll be in touch when the first cohort opens.</p>
-                        <p id="email-note" class="visually-hidden">We'll only use this to notify you about TechFreedom cohort openings.</p>
+
+                        <p id="email-note" class="visually-hidden">
+                            We'll only use this to notify you about TechFreedom cohort openings.
+                        </p>
+
+                        <p class="form-success" id="form-success" role="status" aria-live="polite" hidden tabindex="-1">
+                            Thank you — we'll be in touch when the first cohort opens.
+                        </p>
+
+                        <p class="form-error" id="form-error" role="alert" hidden tabindex="-1">
+                            Sorry — something went wrong. Please try again.
+                        </p>
                     </form>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============ TEAM ============ -->
+        <section class="team" aria-labelledby="team-heading">
+            <div class="section-inner">
+                <h2 id="team-heading" class="reveal">Who's behind this?</h2>
+                <p class="team-intro reveal reveal-delay-1">TechFreedom is built by two people who've spent years helping organisations navigate technology with clarity and independence.</p>
+
+                <div class="team-grid">
+                    <div class="team-member reveal reveal-delay-2">
+                        <div class="team-avatar">
+                            <span class="team-avatar-initial" aria-hidden="true"><img src="tom.jpg" alt="Tom Watson" /></span>
+                        </div>
+                        <p class="team-name"><a href="https://tomcw.xyz">Tom Watson</a></p>
+                        <p class="team-bio">
+                            Coach, advisor and technologist focused on social purpose. Blends data, technology, design and strategy grounded in open infrastructure and principles. 
+                            Founder of Data For Action and The Good Ship.
+                        </p>
+                        <a href="https://good-ship.co.uk" class="team-link">
+                            The Good Ship
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                                <path d="M7 17L17 7M17 7H7M17 7v10"/>
+                            </svg>
+                        </a>
+                    </div>
+
+                    <div class="team-member reveal reveal-delay-3">
+                        <div class="team-avatar">
+                            <span class="team-avatar-initial" aria-hidden="true"><img src="doug.jpg" alt="Doug Belshaw" /></span>
+                        </div>
+                        <p class="team-name"><a href="https://dougbelshaw.com">Doug Belshaw</a></p>
+                        <p class="team-bio">
+                            Consultant, facilitator, and critical friend. Helping mission-driven organisations navigate complexity. 
+                            Specialising in digital literacies, open technology and decentralisation. Director of Dynamic Skillset Ltd.
+                        </p>
+                        <a href="https://dynamicskillset.com" class="team-link">
+                            Dynamic Skillset
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                                <path d="M7 17L17 7M17 7H7M17 7v10"/>
+                            </svg>
+                        </a>
+                    </div>
                 </div>
             </div>
         </section>
     </main>
 
-    <!-- ============ TEAM ============ -->
-    <section class="team" aria-labelledby="team-heading">
-        <div class="section-inner">
-            <h2 id="team-heading" class="reveal">Who's behind this?</h2>
-            <p class="team-intro reveal reveal-delay-1">TechFreedom is built by two people who've spent years helping organisations navigate technology with clarity and independence.</p>
-
-            <div class="team-grid">
-                <div class="team-member reveal reveal-delay-2">
-                    <div class="team-avatar">
-                        <!-- Replace with: <img src="tom.jpg" alt="Tom Watson"> -->
-                        <span class="team-avatar-initial">T</span>
-                    </div>
-                    <p class="team-name"><a href="https://tomcw.xyz">Tom Watson</a></p>
-                    <p class="team-bio">
-                        Coach, advisor and technologist focused on social purpose. Blends data, technology, design and strategy grounded in open infrastructure and principles. 
-                        Founder of Data For Action and The Good Ship.
-                    </p>
-                    <a href="https://good-ship.co.uk" class="team-link">
-                        The Good Ship
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7M17 7H7M17 7v10"/></svg>
-                    </a>
-                </div>
-
-                <div class="team-member reveal reveal-delay-3">
-                    <div class="team-avatar">
-                        <!-- Replace with: <img src="doug.jpg" alt="Doug Belshaw"> -->
-                        <span class="team-avatar-initial">D</span>
-                    </div>
-                    <p class="team-name"><a href="https://dougbelshaw.com">Doug Belshaw</a></p>
-                    <p class="team-bio">
-                        Consultant, facilitator, and critical friend. Helping mission-driven organisations navigate complexity. 
-                        Specialising in digital literacies, open technology and decentralisation. Co-founder of <a href="https://weareopen.coop"></a>We Are Open Co-op</a>.
-                    </p>
-                    <a href="https://dynamicskillset.com/" class="team-link">
-                        Dynamic Skillset
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7M17 7H7M17 7v10"/></svg>
-                    </a>
-                </div>
-            </div>
-        </div>
-    </section>
-
     <!-- ============ FOOTER ============ -->
-    <footer class="site-footer" role="contentinfo">
+    <footer class="site-footer">
         <div class="section-inner">
             <div class="footer-inner">
-                <p class="footer-copyright">TechFreedom &copy; 2026</p>
-                <p class="footer-credit">A project by Tom & Doug</p>
+                <p class="footer-copyright">CC BY TechFreedom 2026</p>
+                <p class="footer-credit"></p>
             </div>
         </div>
     </footer>
 
     <script>
-        /* ========================================
-           INTERSECTION OBSERVER — SCROLL REVEALS
-           ======================================== */
         (function() {
             'use strict';
 
             var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+            /* ========================================
+               INTERSECTION OBSERVER — SCROLL REVEALS
+               ======================================== */
             if (!prefersReducedMotion) {
                 var revealElements = document.querySelectorAll('.reveal');
 
@@ -1344,30 +1387,42 @@
             var form = document.getElementById('signup');
             if (form) {
                 form.addEventListener('submit', function(e) {
-                    e.preventDefault();
                     var emailInput = document.getElementById('email-input');
                     var successMsg = document.getElementById('form-success');
+                    var errorMsg = document.getElementById('form-error');
                     var submitBtn = form.querySelector('button[type="submit"]');
 
-                    if (emailInput.validity.valid) {
-                        submitBtn.textContent = 'Sending…';
-                        submitBtn.disabled = true;
-
-                        // Submit to Netlify Forms via fetch
-                        var formData = new FormData(form);
-                        fetch('/', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                            body: new URLSearchParams(formData).toString()
-                        }).then(function() {
-                            successMsg.style.display = 'block';
-                            form.querySelector('.form-row').style.display = 'none';
-                        }).catch(function() {
-                            // Fallback: still show success (Netlify will have the data)
-                            successMsg.style.display = 'block';
-                            form.querySelector('.form-row').style.display = 'none';
-                        });
+                    if (!emailInput.checkValidity()) {
+                        e.preventDefault();
+                        emailInput.reportValidity();
+                        return;
                     }
+
+                    if (!window.fetch) return;
+
+                    e.preventDefault();
+                    submitBtn.textContent = 'Sending…';
+                    submitBtn.disabled = true;
+                    if (errorMsg) errorMsg.hidden = true;
+
+                    var formData = new FormData(form);
+
+                    fetch(form.getAttribute('action') || '/', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: new URLSearchParams(formData).toString()
+                    }).then(function() {
+                        form.querySelector('.form-row').hidden = true;
+                        successMsg.hidden = false;
+                        successMsg.focus();
+                    }).catch(function() {
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = 'Notify me';
+                        if (errorMsg) {
+                            errorMsg.hidden = false;
+                            errorMsg.focus();
+                        }
+                    });
                 });
             }
 
@@ -1389,7 +1444,6 @@
                                 if (fog) {
                                     fog.style.transform = 'translateY(' + (scrolled * 0.3) + 'px)';
                                 }
-                                // Fade scroll hint
                                 var hint = hero.querySelector('.scroll-hint');
                                 if (hint) {
                                     hint.style.opacity = Math.max(0, 1 - (scrolled / 200));
