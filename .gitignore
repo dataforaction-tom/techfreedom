@@ -1,5 +1,12 @@
 CLAUDE.local.md
+CLAUDE.md
+CLAUDE.global.md
 HANDOFF.md
-.claude/settings.local.json
+PLAN.md
+STATE.md
+MISTAKES.md
+techfreedom-plan.md
+setup.sh
+.claude/
 *.png
 .playwright-mcp/
