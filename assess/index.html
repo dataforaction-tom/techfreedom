@@ -1024,11 +1024,16 @@
         'use strict';
 
         /* ========================================
-           TOOL DATA
-           When PocketBase is set up, replace this with:
-           fetch('https://api.techfreedom.eu/api/collections/tools/records?perPage=50')
+           CONFIGURATION
            ======================================== */
-        var TOOLS = [
+        var API_BASE = 'https://api.techfreedom.eu';
+
+        /* ========================================
+           TOOL DATA (embedded fallback)
+           The app tries to fetch from PocketBase first.
+           If the API is unavailable, this data is used.
+           ======================================== */
+        var TOOLS_FALLBACK = [
             {id:1,name:"Google Workspace (Gmail, Drive, Docs, Sheets, Calendar, Meet)",slug:"google-workspace",category:"Productivity Suite",provider:"Google LLC (Alphabet)",hqCountry:"United States",dataHosting:"US default; EU on higher tiers",jurisdiction:4,continuity:3,surveillance:5,lockIn:4,costExposure:3,total:19,riskLevel:"High",keyRisks:"Data subject to US CLOUD Act. Extensive tracking feeds ad/AI models. Free tier eliminated for orgs. Data export possible but complex. EU hosting only on expensive plans."},
             {id:2,name:"Gmail (free/personal)",slug:"gmail-free",category:"Email",provider:"Google LLC",hqCountry:"United States",dataHosting:"United States",jurisdiction:5,continuity:2,surveillance:5,lockIn:3,costExposure:1,total:16,riskLevel:"High",keyRisks:"All email scanned for ads/AI. No data residency options. Not GDPR compliant for organisational use. Easy to leave but contacts/history lost."},
             {id:3,name:"Microsoft 365 (Outlook, OneDrive, Word, Excel, Teams, SharePoint)",slug:"microsoft-365",category:"Productivity Suite",provider:"Microsoft Corp",hqCountry:"United States",dataHosting:"UK/EU data centres available",jurisdiction:3,continuity:3,surveillance:4,lockIn:5,costExposure:4,total:19,riskLevel:"High",keyRisks:"UK hosting available but parent co. still US-jurisdicted. Deepest lock-in of any suite. Prices risen ~25% in 3 years. Copilot/AI trains on your data by default."},
@@ -1058,10 +1063,12 @@
             {id:27,name:"Amazon Web Services",slug:"aws",category:"Cloud Infrastructure",provider:"Amazon.com Inc",hqCountry:"United States",dataHosting:"UK/EU regions available",jurisdiction:3,continuity:3,surveillance:3,lockIn:4,costExposure:4,total:17,riskLevel:"High",keyRisks:"UK hosting available but Amazon is US-jurisdicted. Deep lock-in through proprietary services. CLOUD Act applies."}
         ];
 
+        var TOOLS = TOOLS_FALLBACK;
+
         /* ========================================
-           ARCHETYPE PRESETS
+           ARCHETYPE PRESETS (embedded fallback)
            ======================================== */
-        var ARCHETYPES = [
+        var ARCHETYPES_FALLBACK = [
             {
                 name: "Microsoft Heavy",
                 slug: "microsoft-heavy",
@@ -1099,6 +1106,8 @@
                 toolSlugs: ["microsoft-365", "salesforce", "surveymonkey", "eventbrite", "wordpress-com"]
             }
         ];
+
+        var ARCHETYPES = ARCHETYPES_FALLBACK;
 
         var DIMENSIONS = ['jurisdiction', 'continuity', 'surveillance', 'lockIn', 'costExposure'];
         var DIM_LABELS = {
@@ -1719,13 +1728,91 @@
         }
 
         /* ========================================
+           POCKETBASE DATA FETCH
+           Tries API first, falls back to embedded data.
+           ======================================== */
+        function fetchFromAPI() {
+            if (!window.fetch) return Promise.reject('No fetch');
+
+            var toolsUrl = API_BASE + '/api/collections/tools/records?perPage=50&sort=name';
+            var archetypesUrl = API_BASE + '/api/collections/archetypes/records?perPage=20&expand=tools';
+
+            function fetchWithTimeout(url, ms) {
+                return new Promise(function(resolve, reject) {
+                    var timer = setTimeout(function() { reject(new Error('timeout')); }, ms);
+                    fetch(url).then(function(r) {
+                        clearTimeout(timer);
+                        if (!r.ok) reject(new Error(r.status));
+                        else resolve(r.json());
+                    }).catch(function(err) {
+                        clearTimeout(timer);
+                        reject(err);
+                    });
+                });
+            }
+
+            return Promise.all([
+                fetchWithTimeout(toolsUrl, 5000),
+                fetchWithTimeout(archetypesUrl, 5000)
+            ]).then(function(results) {
+                var toolRecords = results[0].items || [];
+                var archRecords = results[1].items || [];
+
+                if (toolRecords.length === 0) throw new Error('No tools returned');
+
+                // Map PocketBase records to our format
+                TOOLS = toolRecords.map(function(r, i) {
+                    return {
+                        id: i + 1,
+                        pbId: r.id,
+                        name: r.name,
+                        slug: r.slug,
+                        category: r.category,
+                        provider: r.provider,
+                        hqCountry: r.hqCountry,
+                        dataHosting: r.dataHosting,
+                        jurisdiction: r.jurisdiction,
+                        continuity: r.continuity,
+                        surveillance: r.surveillance,
+                        lockIn: r.lockIn,
+                        costExposure: r.costExposure,
+                        total: r.total,
+                        riskLevel: r.riskLevel,
+                        keyRisks: r.keyRisks,
+                        lastReviewed: r.lastReviewed
+                    };
+                });
+
+                // Map archetypes — resolve tool relations to slugs
+                if (archRecords.length > 0) {
+                    var pbIdToSlug = {};
+                    toolRecords.forEach(function(r) { pbIdToSlug[r.id] = r.slug; });
+
+                    ARCHETYPES = archRecords.map(function(r) {
+                        var toolSlugs = (r.tools || []).map(function(tid) {
+                            return pbIdToSlug[tid] || '';
+                        }).filter(Boolean);
+
+                        return {
+                            name: r.name,
+                            slug: r.slug,
+                            description: r.description,
+                            toolSlugs: toolSlugs
+                        };
+                    });
+                }
+
+                console.log('TechFreedom: Loaded ' + TOOLS.length + ' tools from API');
+                return true;
+            });
+        }
+
+        /* ========================================
            INIT
            ======================================== */
         function init() {
             initNav();
             initScrollReveals();
-            renderArchetypes();
-            initSearch();
 
             // Wire up assess button
             document.getElementById('assess-btn').addEventListener('click', function() {
@@ -1736,11 +1823,22 @@
             document.getElementById('btn-pdf').addEventListener('click', downloadPDF);
             document.getElementById('btn-share').addEventListener('click', shareURL);
 
-            // Check for shared URL
-            parseURLParams();
-
             // Responsive heatmap
             window.addEventListener('resize', checkMobileHeatmap);
+
+            // Try to load data from PocketBase, then render UI
+            function renderUI() {
+                renderArchetypes();
+                initSearch();
+                parseURLParams();
+            }
+
+            fetchFromAPI().then(renderUI).catch(function() {
+                // API unavailable — use embedded fallback data
+                TOOLS = TOOLS_FALLBACK;
+                ARCHETYPES = ARCHETYPES_FALLBACK;
+                renderUI();
+            });
         }
 
         // Wait for DOM

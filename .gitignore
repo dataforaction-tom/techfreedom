@@ -6,7 +6,7 @@ PLAN.md
 STATE.md
 MISTAKES.md
 techfreedom-plan.md
-setup.sh
+/setup.sh
 .claude/
 *.png
 !og-image.png
