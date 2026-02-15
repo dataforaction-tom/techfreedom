@@ -1,0 +1,1755 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tech Stack Risk Assessment — TechFreedom</title>
+    <meta name="description" content="Map your tech stack. See the risks. A free tool to assess your organisation's Big Tech dependency across five risk dimensions.">
+    <link rel="canonical" href="https://techfreedom.eu/assess/">
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://techfreedom.eu/assess/">
+    <meta property="og:title" content="Tech Stack Risk Assessment — TechFreedom">
+    <meta property="og:description" content="Map your tech stack. See the risks. Assess your organisation's Big Tech dependency.">
+    <meta property="og:image" content="https://techfreedom.eu/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:locale" content="en_GB">
+    <meta property="og:site_name" content="TechFreedom">
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Tech Stack Risk Assessment — TechFreedom">
+    <meta name="twitter:description" content="Map your tech stack. See the risks. Assess your Big Tech dependency.">
+    <meta name="twitter:image" content="https://techfreedom.eu/og-image.png">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%231A2332'/%3E%3Ctext x='16' y='24' font-family='Georgia,serif' font-size='22' font-weight='400' fill='%23F7F5F0' text-anchor='middle'%3ETf%3C/text%3E%3C/svg%3E">
+    <script defer data-domain="techfreedom.eu" src="https://plausible.io/js/script.js"></script>
+    <!-- Privacy-friendly fonts (Bunny Fonts) -->
+    <link rel="preconnect" href="https://fonts.bunny.net">
+    <link href="https://fonts.bunny.net/css?family=dm-sans:400,400i,500,500i,700,700i&display=swap" rel="stylesheet" />
+    <link href="https://fonts.bunny.net/css?family=fraunces:300,300i,400,400i,500,500i,600,600i,700,700i,800,800i&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../css/shared.css">
+    <!-- Chart.js for radar chart -->
+    <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <!-- html2pdf.js for PDF export -->
+    <script defer src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.2/dist/html2pdf.bundle.min.js"></script>
+    <style>
+        /* ========================================
+           ASSESSMENT PAGE STYLES
+           ======================================== */
+
+        /* --- Page Header --- */
+        .assess-header {
+            padding: calc(var(--space-2xl) + 60px) 0 var(--space-xl) 0;
+            background: linear-gradient(180deg, var(--bg-primary) 0%, var(--bg-warm) 100%);
+        }
+
+        .assess-header h1 {
+            font-size: clamp(2rem, 1.5rem + 2.5vw, 3.5rem);
+            font-weight: 300;
+            margin-bottom: var(--space-s);
+            font-variation-settings: 'opsz' 72;
+        }
+
+        .assess-header .tagline {
+            font-family: var(--font-display);
+            font-size: clamp(1.1rem, 1rem + 0.5vw, 1.35rem);
+            font-weight: 300;
+            font-style: italic;
+            color: var(--accent-sky);
+            margin-bottom: var(--space-m);
+            font-variation-settings: 'opsz' 36;
+        }
+
+        .assess-header p:last-child {
+            color: var(--text-secondary);
+            line-height: 1.8;
+        }
+
+        /* --- Archetype Selection --- */
+        .archetypes-section {
+            padding: var(--space-xl) 0;
+            background: var(--bg-warm);
+            border-top: 1px solid var(--horizon);
+        }
+
+        .archetypes-section h2 {
+            margin-bottom: var(--space-xs);
+        }
+
+        .archetypes-intro {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-bottom: var(--space-l);
+        }
+
+        .archetype-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: var(--space-s);
+            margin-bottom: var(--space-l);
+        }
+
+        .archetype-card {
+            padding: var(--space-m);
+            background: var(--white);
+            border: 1px solid var(--horizon);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+            font-family: inherit;
+            font-size: inherit;
+            color: inherit;
+        }
+
+        .archetype-card:hover {
+            border-color: var(--accent-sky);
+            box-shadow: 0 2px 12px rgba(74, 144, 217, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .archetype-card:focus-visible {
+            outline: 2px solid var(--accent-sky);
+            outline-offset: 2px;
+        }
+
+        .archetype-card.selected {
+            border-color: var(--accent-sky);
+            background: var(--accent-sky-light);
+        }
+
+        .archetype-card h3 {
+            font-size: 1.1rem;
+            margin-bottom: var(--space-xs);
+            font-weight: 400;
+        }
+
+        .archetype-card p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        .archetype-card .tool-count {
+            display: inline-block;
+            margin-top: var(--space-xs);
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--accent-sky);
+            letter-spacing: 0.05em;
+        }
+
+        /* --- Custom Stack Builder --- */
+        .custom-builder {
+            border-top: 1px solid var(--horizon);
+            padding-top: var(--space-l);
+        }
+
+        .custom-builder h3 {
+            font-size: 1.1rem;
+            font-weight: 400;
+            margin-bottom: var(--space-s);
+        }
+
+        .search-wrapper {
+            position: relative;
+            max-width: 480px;
+        }
+
+        .search-input {
+            width: 100%;
+            font-family: var(--font-body);
+            font-size: 0.95rem;
+            padding: 0.85em 1em;
+            padding-left: 2.5em;
+            border: 1px solid var(--bg-fog);
+            border-radius: 4px;
+            background: var(--white);
+            color: var(--text-primary);
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .search-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent-sky);
+            box-shadow: 0 0 0 3px var(--accent-sky-light);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 0.85em;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 1em;
+            height: 1em;
+            color: var(--text-muted);
+            pointer-events: none;
+        }
+
+        .autocomplete-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--white);
+            border: 1px solid var(--bg-fog);
+            border-top: none;
+            border-radius: 0 0 4px 4px;
+            list-style: none;
+            max-height: 240px;
+            overflow-y: auto;
+            z-index: 50;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        .autocomplete-list:empty {
+            display: none;
+        }
+
+        .autocomplete-item {
+            padding: 0.65em 1em;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.15s ease;
+        }
+
+        .autocomplete-item:hover,
+        .autocomplete-item.highlighted {
+            background: var(--accent-sky-light);
+        }
+
+        .autocomplete-item .category {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-left: 0.5em;
+        }
+
+        /* --- Selected Tools Chips --- */
+        .selected-tools {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-xs);
+            margin-top: var(--space-s);
+            min-height: 2rem;
+        }
+
+        .tool-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4em;
+            padding: 0.4em 0.75em;
+            background: var(--bg-mist);
+            border: 1px solid var(--horizon);
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-family: var(--font-body);
+            color: var(--text-primary);
+            animation: chipIn 0.25s ease;
+        }
+
+        @keyframes chipIn {
+            from { opacity: 0; transform: scale(0.85); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .chip-remove {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 1.2em;
+            height: 1.2em;
+            padding: 0;
+            border: none;
+            background: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-radius: 50%;
+            font-size: 0.9rem;
+            line-height: 1;
+            transition: color 0.2s ease, background 0.2s ease;
+        }
+
+        .chip-remove:hover {
+            color: #C62828;
+            background: rgba(198, 40, 40, 0.1);
+        }
+
+        .chip-remove:focus-visible {
+            outline: 2px solid var(--accent-sky);
+            outline-offset: 1px;
+        }
+
+        .assess-btn {
+            display: inline-block;
+            margin-top: var(--space-m);
+            padding: 0.85em 2em;
+            font-family: var(--font-body);
+            font-size: 0.95rem;
+            font-weight: 500;
+            background: var(--accent-amber);
+            color: var(--text-primary);
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 1px 3px rgba(212, 168, 67, 0.2);
+        }
+
+        .assess-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(212, 168, 67, 0.3);
+        }
+
+        .assess-btn:focus-visible {
+            outline: 2px solid var(--accent-sky);
+            outline-offset: 3px;
+        }
+
+        .assess-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* --- Results Section --- */
+        .results-section {
+            padding: var(--space-xl) 0;
+            background: var(--bg-primary);
+        }
+
+        .results-section[hidden] {
+            display: none;
+        }
+
+        .results-section h2 {
+            margin-bottom: var(--space-l);
+        }
+
+        /* --- Heatmap --- */
+        .heatmap-wrapper {
+            margin-bottom: var(--space-xl);
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .heatmap {
+            width: 100%;
+            min-width: 640px;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .heatmap thead th {
+            font-family: var(--font-body);
+            font-size: 0.7rem;
+            font-weight: 500;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            padding: 0.75em 0.5em;
+            text-align: center;
+            border-bottom: 2px solid var(--horizon);
+            position: sticky;
+            top: 0;
+            background: var(--bg-primary);
+        }
+
+        .heatmap thead th:first-child {
+            text-align: left;
+            min-width: 200px;
+        }
+
+        .heatmap tbody tr {
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+
+        .heatmap tbody tr:hover {
+            background: rgba(74, 144, 217, 0.04);
+        }
+
+        .heatmap tbody td {
+            padding: 0.65em 0.5em;
+            text-align: center;
+            border-bottom: 1px solid var(--horizon);
+            font-size: 0.9rem;
+        }
+
+        .heatmap tbody td:first-child {
+            text-align: left;
+            font-weight: 500;
+        }
+
+        .heatmap .tool-category {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 400;
+            color: var(--text-muted);
+        }
+
+        .heatmap .score-cell {
+            width: 2.2em;
+            height: 2.2em;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--white);
+        }
+
+        .score-1 { background: #2E7D32; }
+        .score-2 { background: #689F38; }
+        .score-3 { background: #F9A825; color: var(--text-primary); }
+        .score-4 { background: #EF6C00; }
+        .score-5 { background: #C62828; }
+
+        .heatmap .total-cell {
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+
+        .risk-badge {
+            display: inline-block;
+            padding: 0.15em 0.5em;
+            border-radius: 3px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .risk-badge.low { background: #E8F5E9; color: #2E7D32; }
+        .risk-badge.medium { background: #FFF8E1; color: #F57F17; }
+        .risk-badge.high { background: #FBE9E7; color: #D84315; }
+        .risk-badge.critical { background: #FFEBEE; color: #C62828; }
+
+        /* Expandable key risks row */
+        .key-risks-row td {
+            padding: 0;
+            border-bottom: 1px solid var(--horizon);
+        }
+
+        .key-risks-row[hidden] {
+            display: none;
+        }
+
+        .key-risks-content {
+            padding: var(--space-s) var(--space-m);
+            background: var(--bg-warm);
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.7;
+            border-left: 3px solid var(--accent-amber);
+        }
+
+        .key-risks-content strong {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .expand-indicator {
+            display: inline-block;
+            width: 0.6em;
+            height: 0.6em;
+            margin-right: 0.4em;
+            border-right: 2px solid var(--text-muted);
+            border-bottom: 2px solid var(--text-muted);
+            transform: rotate(-45deg);
+            transition: transform 0.2s ease;
+            vertical-align: middle;
+        }
+
+        tr.expanded .expand-indicator {
+            transform: rotate(45deg);
+        }
+
+        /* --- Scoring Key --- */
+        .scoring-key {
+            display: flex;
+            gap: var(--space-s);
+            flex-wrap: wrap;
+            margin-bottom: var(--space-m);
+            padding: var(--space-s);
+            background: var(--bg-warm);
+            border-radius: 6px;
+            font-size: 0.8rem;
+            align-items: center;
+        }
+
+        .scoring-key-label {
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-right: var(--space-xs);
+        }
+
+        .scoring-key-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3em;
+        }
+
+        .scoring-key-swatch {
+            width: 1em;
+            height: 1em;
+            border-radius: 2px;
+        }
+
+        /* --- Radar Chart --- */
+        .radar-wrapper {
+            margin-bottom: var(--space-xl);
+        }
+
+        .radar-wrapper h3 {
+            margin-bottom: var(--space-s);
+        }
+
+        .chart-container {
+            position: relative;
+            max-width: 480px;
+            margin: 0 auto;
+        }
+
+        .chart-container canvas {
+            width: 100% !important;
+            height: auto !important;
+        }
+
+        /* --- Summary --- */
+        .summary-section {
+            margin-bottom: var(--space-xl);
+            padding: var(--space-l);
+            background: linear-gradient(135deg, rgba(247, 245, 240, 0.8) 0%, rgba(255,255,255,0.6) 100%);
+            border: 1px solid var(--horizon);
+            border-radius: 8px;
+        }
+
+        .summary-section h3 {
+            margin-bottom: var(--space-s);
+        }
+
+        .summary-text {
+            color: var(--text-secondary);
+            line-height: 1.85;
+            font-size: 0.95rem;
+        }
+
+        .summary-text strong {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        /* --- Export Actions --- */
+        .export-actions {
+            display: flex;
+            gap: var(--space-s);
+            flex-wrap: wrap;
+            margin-bottom: var(--space-xl);
+        }
+
+        .btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5em;
+            padding: 0.7em 1.25em;
+            font-family: var(--font-body);
+            font-size: 0.85rem;
+            font-weight: 500;
+            background: var(--white);
+            color: var(--text-primary);
+            border: 1px solid var(--bg-fog);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--accent-sky);
+            color: var(--accent-sky);
+        }
+
+        .btn-secondary:focus-visible {
+            outline: 2px solid var(--accent-sky);
+            outline-offset: 2px;
+        }
+
+        .btn-secondary svg {
+            width: 1em;
+            height: 1em;
+        }
+
+        .share-url-display {
+            display: none;
+            align-items: center;
+            gap: var(--space-xs);
+            margin-top: var(--space-xs);
+            padding: 0.5em 0.75em;
+            background: var(--bg-warm);
+            border-radius: 4px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            word-break: break-all;
+        }
+
+        .share-url-display.visible {
+            display: flex;
+        }
+
+        .copy-feedback {
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: #2E7D32;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .copy-feedback.show {
+            opacity: 1;
+        }
+
+        /* --- CTA Section --- */
+        .cta-section {
+            padding: var(--space-xl) 0;
+            background: linear-gradient(180deg, var(--bg-primary) 0%, var(--bg-warm) 40%, var(--bg-mist) 100%);
+            border-top: 1px solid var(--horizon);
+        }
+
+        .cta-section[hidden] {
+            display: none;
+        }
+
+        .cta-section h2 {
+            margin-bottom: var(--space-xs);
+        }
+
+        .cta-pivot {
+            font-family: var(--font-display);
+            font-style: italic;
+            font-size: clamp(1.1rem, 1rem + 0.5vw, 1.3rem);
+            color: var(--accent-amber);
+            margin-bottom: var(--space-l);
+            font-variation-settings: 'opsz' 36;
+        }
+
+        .cta-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: var(--space-m);
+        }
+
+        .cta-card {
+            padding: var(--space-l);
+            background: linear-gradient(135deg, rgba(247, 245, 240, 0.8) 0%, rgba(255,255,255,0.6) 100%);
+            border: 1px solid var(--horizon);
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .cta-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+        }
+
+        .cta-card h3 {
+            font-size: 1.15rem;
+            font-weight: 400;
+            margin-bottom: var(--space-s);
+        }
+
+        .cta-card p {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.7;
+            margin-bottom: var(--space-m);
+        }
+
+        .cta-card .cta-price {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            margin-bottom: var(--space-s);
+            letter-spacing: 0.02em;
+        }
+
+        .cta-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35em;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--accent-sky);
+            text-decoration: none;
+            transition: color 0.3s ease, gap 0.3s ease;
+        }
+
+        .cta-link:hover {
+            color: var(--accent-amber);
+            gap: 0.5em;
+        }
+
+        .cta-link svg {
+            width: 0.85em;
+            height: 0.85em;
+        }
+
+        /* --- Loading / Error States --- */
+        .loading-state {
+            text-align: center;
+            padding: var(--space-xl);
+            color: var(--text-muted);
+        }
+
+        .error-banner {
+            padding: var(--space-s) var(--space-m);
+            background: #FFF3E0;
+            border-left: 3px solid #EF6C00;
+            border-radius: 0 4px 4px 0;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: var(--space-m);
+        }
+
+        /* ========================================
+           RESPONSIVE (assessment page)
+           ======================================== */
+        @media (max-width: 768px) {
+            .archetype-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .cta-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .heatmap {
+                min-width: 0;
+            }
+
+            /* Stack heatmap into cards on mobile */
+            .heatmap-wrapper.mobile-cards .heatmap,
+            .heatmap-wrapper.mobile-cards .heatmap thead,
+            .heatmap-wrapper.mobile-cards .heatmap tbody,
+            .heatmap-wrapper.mobile-cards .heatmap tr,
+            .heatmap-wrapper.mobile-cards .heatmap td {
+                display: block;
+            }
+
+            .heatmap-wrapper.mobile-cards .heatmap thead {
+                display: none;
+            }
+
+            .heatmap-wrapper.mobile-cards .heatmap tbody tr:not(.key-risks-row) {
+                padding: var(--space-m);
+                margin-bottom: var(--space-s);
+                background: var(--white);
+                border: 1px solid var(--horizon);
+                border-radius: 8px;
+            }
+
+            .heatmap-wrapper.mobile-cards .heatmap tbody td {
+                text-align: left;
+                padding: 0.35em 0;
+                border-bottom: none;
+            }
+
+            .heatmap-wrapper.mobile-cards .heatmap tbody td::before {
+                content: attr(data-label);
+                display: inline-block;
+                width: 7em;
+                font-size: 0.75rem;
+                font-weight: 500;
+                color: var(--text-muted);
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+            }
+
+            .heatmap-wrapper.mobile-cards .key-risks-content {
+                border-left: none;
+                border-top: 3px solid var(--accent-amber);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .archetype-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .assess-header {
+                padding-top: calc(var(--space-xl) + 60px);
+            }
+
+            .export-actions {
+                flex-direction: column;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .tool-chip {
+                animation: none;
+            }
+            .archetype-card:hover,
+            .cta-card:hover {
+                transform: none;
+            }
+        }
+
+        /* --- Print styles for PDF --- */
+        @media print {
+            .site-nav, .skip-link, .archetypes-section,
+            .export-actions, .cta-section, .site-footer {
+                display: none !important;
+            }
+            body::after {
+                display: none;
+            }
+            .results-section {
+                padding: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <a class="skip-link" href="#main-content">Skip to main content</a>
+
+    <nav class="site-nav" aria-label="Main navigation">
+        <a href="/" class="nav-wordmark">TechFreedom</a>
+        <ul class="nav-links">
+            <li><a href="/assess/" aria-current="page">Assessment</a></li>
+        </ul>
+    </nav>
+
+    <header class="assess-header">
+        <div class="section-inner section-inner--wide">
+            <h1 class="reveal">Tech Stack Risk Assessment</h1>
+            <p class="tagline reveal reveal-delay-1">Map your tech stack. See the risks.</p>
+            <p class="reveal reveal-delay-2">Select a preset archetype that matches your organisation, or build a custom stack. We'll score each tool across five risk dimensions: jurisdiction, continuity, surveillance, lock-in, and cost exposure.</p>
+        </div>
+    </header>
+
+    <main id="main-content" tabindex="-1">
+
+        <!-- ============ ARCHETYPE SELECTION ============ -->
+        <section class="archetypes-section" aria-labelledby="archetypes-heading">
+            <div class="section-inner section-inner--wide">
+                <h2 id="archetypes-heading" class="reveal">Choose your starting point</h2>
+                <p class="archetypes-intro reveal reveal-delay-1">Pick the profile that best describes your organisation, or build your own below.</p>
+
+                <div class="archetype-grid reveal reveal-delay-2" role="list" id="archetype-grid">
+                    <!-- Populated by JS -->
+                </div>
+
+                <div class="custom-builder reveal reveal-delay-3">
+                    <h3>Or build your own stack</h3>
+                    <div class="search-wrapper">
+                        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                            <circle cx="11" cy="11" r="8"/>
+                            <path d="M21 21l-4.35-4.35"/>
+                        </svg>
+                        <label for="tool-search" class="visually-hidden">Search for a tool to add</label>
+                        <input
+                            type="text"
+                            id="tool-search"
+                            class="search-input"
+                            placeholder="Search tools (e.g. Slack, Zoom, Canva...)"
+                            autocomplete="off"
+                            role="combobox"
+                            aria-expanded="false"
+                            aria-controls="autocomplete-list"
+                            aria-autocomplete="list"
+                        >
+                        <ul id="autocomplete-list" class="autocomplete-list" role="listbox" aria-label="Matching tools"></ul>
+                    </div>
+
+                    <div class="selected-tools" id="selected-tools" aria-live="polite" aria-label="Selected tools">
+                        <!-- Chips appear here -->
+                    </div>
+
+                    <button class="assess-btn" id="assess-btn" disabled aria-disabled="true">
+                        Show my risk assessment
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============ RESULTS ============ -->
+        <section class="results-section" id="results-section" hidden aria-labelledby="results-heading">
+            <div class="section-inner section-inner--wide">
+                <h2 id="results-heading">Your Risk Assessment</h2>
+
+                <!-- Scoring Key -->
+                <div class="scoring-key" role="img" aria-label="Risk scoring key: 1 is minimal risk (green), 5 is critical risk (red)">
+                    <span class="scoring-key-label">Risk scale:</span>
+                    <span class="scoring-key-item"><span class="scoring-key-swatch score-1"></span> 1 Minimal</span>
+                    <span class="scoring-key-item"><span class="scoring-key-swatch score-2"></span> 2 Low</span>
+                    <span class="scoring-key-item"><span class="scoring-key-swatch score-3"></span> 3 Moderate</span>
+                    <span class="scoring-key-item"><span class="scoring-key-swatch score-4"></span> 4 High</span>
+                    <span class="scoring-key-item"><span class="scoring-key-swatch score-5"></span> 5 Critical</span>
+                </div>
+
+                <!-- Heatmap -->
+                <div class="heatmap-wrapper" id="heatmap-wrapper">
+                    <table class="heatmap" id="heatmap" role="grid" aria-label="Tool risk scores heatmap">
+                        <thead>
+                            <tr>
+                                <th scope="col">Tool</th>
+                                <th scope="col">Jurisdiction</th>
+                                <th scope="col">Continuity</th>
+                                <th scope="col">Surveillance</th>
+                                <th scope="col">Lock-in</th>
+                                <th scope="col">Cost</th>
+                                <th scope="col">Total</th>
+                                <th scope="col">Risk</th>
+                            </tr>
+                        </thead>
+                        <tbody id="heatmap-body">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Radar Chart -->
+                <div class="radar-wrapper">
+                    <h3>Risk Profile Overview</h3>
+                    <div class="chart-container">
+                        <canvas id="radar-chart" aria-label="Radar chart showing aggregate risk scores across five dimensions"></canvas>
+                    </div>
+                    <div id="radar-text-alt" class="visually-hidden" aria-live="polite">
+                        <!-- Screen reader text equivalent -->
+                    </div>
+                </div>
+
+                <!-- Summary -->
+                <div class="summary-section">
+                    <h3>Summary</h3>
+                    <div class="summary-text" id="summary-text">
+                        <!-- Generated by JS -->
+                    </div>
+                </div>
+
+                <!-- Export Actions -->
+                <div class="export-actions">
+                    <button class="btn-secondary" id="btn-pdf" type="button">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                            <line x1="12" y1="18" x2="12" y2="12"/>
+                            <polyline points="9 15 12 18 15 15"/>
+                        </svg>
+                        Download PDF
+                    </button>
+                    <button class="btn-secondary" id="btn-share" type="button">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                            <circle cx="18" cy="5" r="3"/>
+                            <circle cx="6" cy="12" r="3"/>
+                            <circle cx="18" cy="19" r="3"/>
+                            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+                            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+                        </svg>
+                        Share via URL
+                    </button>
+                    <span class="copy-feedback" id="copy-feedback">Link copied!</span>
+                    <div class="share-url-display" id="share-url-display"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============ CTA ============ -->
+        <section class="cta-section" id="cta-section" hidden aria-labelledby="cta-heading">
+            <div class="section-inner section-inner--wide">
+                <h2 id="cta-heading" class="reveal">The sky is clearing</h2>
+                <p class="cta-pivot reveal reveal-delay-1">You've seen the risks. Now see the way out.</p>
+
+                <div class="cta-grid reveal reveal-delay-2">
+                    <div class="cta-card">
+                        <h3>Join the next cohort</h3>
+                        <p>Work through your tech stack with a small group of like-minded organisations. We'll map your risks, explore alternatives, and build a practical migration plan together.</p>
+                        <span class="cta-price">Free / subsidised</span>
+                        <a href="https://lu.ma/techfreedom" class="cta-link" target="_blank" rel="noopener">
+                            Find out more
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                                <path d="M7 17L17 7M17 7H7M17 7v10"/>
+                            </svg>
+                        </a>
+                    </div>
+
+                    <div class="cta-card">
+                        <h3>Get your alternatives guide</h3>
+                        <p>For each tool in your stack, we'll show you European and open-source alternatives with migration guides, trade-offs, and real costs.</p>
+                        <span class="cta-price">One-time purchase</span>
+                        <a href="#" class="cta-link" id="cta-alternatives">
+                            Coming soon
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                                <path d="M7 17L17 7M17 7H7M17 7v10"/>
+                            </svg>
+                        </a>
+                    </div>
+
+                    <div class="cta-card">
+                        <h3>Book bespoke support</h3>
+                        <p>We'll build a migration roadmap tailored to your organisation, including risk assessment, tool recommendations, and hands-on implementation support.</p>
+                        <span class="cta-price">Quote-based</span>
+                        <a href="https://cal.com/techfreedom" class="cta-link" target="_blank" rel="noopener">
+                            Book a call
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                                <path d="M7 17L17 7M17 7H7M17 7v10"/>
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ============ FOOTER ============ -->
+    <footer class="site-footer">
+        <div class="section-inner">
+            <div class="footer-inner">
+                <p class="footer-copyright">CC BY TechFreedom 2026</p>
+                <p class="footer-credit"></p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+    (function() {
+        'use strict';
+
+        /* ========================================
+           TOOL DATA
+           When PocketBase is set up, replace this with:
+           fetch('https://api.techfreedom.eu/api/collections/tools/records?perPage=50')
+           ======================================== */
+        var TOOLS = [
+            {id:1,name:"Google Workspace (Gmail, Drive, Docs, Sheets, Calendar, Meet)",slug:"google-workspace",category:"Productivity Suite",provider:"Google LLC (Alphabet)",hqCountry:"United States",dataHosting:"US default; EU on higher tiers",jurisdiction:4,continuity:3,surveillance:5,lockIn:4,costExposure:3,total:19,riskLevel:"High",keyRisks:"Data subject to US CLOUD Act. Extensive tracking feeds ad/AI models. Free tier eliminated for orgs. Data export possible but complex. EU hosting only on expensive plans."},
+            {id:2,name:"Gmail (free/personal)",slug:"gmail-free",category:"Email",provider:"Google LLC",hqCountry:"United States",dataHosting:"United States",jurisdiction:5,continuity:2,surveillance:5,lockIn:3,costExposure:1,total:16,riskLevel:"High",keyRisks:"All email scanned for ads/AI. No data residency options. Not GDPR compliant for organisational use. Easy to leave but contacts/history lost."},
+            {id:3,name:"Microsoft 365 (Outlook, OneDrive, Word, Excel, Teams, SharePoint)",slug:"microsoft-365",category:"Productivity Suite",provider:"Microsoft Corp",hqCountry:"United States",dataHosting:"UK/EU data centres available",jurisdiction:3,continuity:3,surveillance:4,lockIn:5,costExposure:4,total:19,riskLevel:"High",keyRisks:"UK hosting available but parent co. still US-jurisdicted. Deepest lock-in of any suite. Prices risen ~25% in 3 years. Copilot/AI trains on your data by default."},
+            {id:4,name:"Microsoft Teams",slug:"microsoft-teams",category:"Communication",provider:"Microsoft Corp",hqCountry:"United States",dataHosting:"UK/EU available",jurisdiction:3,continuity:3,surveillance:4,lockIn:5,costExposure:4,total:19,riskLevel:"High",keyRisks:"Tightly bundled with M365 \u2014 near-impossible to use alternatives. Metadata extensively collected. Requires M365 licence."},
+            {id:5,name:"Slack",slug:"slack",category:"Communication",provider:"Salesforce",hqCountry:"United States",dataHosting:"US (AWS)",jurisdiction:4,continuity:3,surveillance:3,lockIn:3,costExposure:4,total:17,riskLevel:"High",keyRisks:"Acquired by Salesforce 2021. Data in US. Free tier: 90-day history limit. Paid plans expensive for small orgs. Good data export."},
+            {id:6,name:"Zoom",slug:"zoom",category:"Video Conferencing",provider:"Zoom Video Communications",hqCountry:"United States",dataHosting:"US primarily; some EU routing",jurisdiction:4,continuity:2,surveillance:4,lockIn:2,costExposure:3,total:15,riskLevel:"High",keyRisks:"Updated ToS 2023 allowing AI training on calls. Data routed through US. Low lock-in. Prices increased."},
+            {id:7,name:"WhatsApp (organisational use)",slug:"whatsapp",category:"Messaging",provider:"Meta Platforms",hqCountry:"United States",dataHosting:"United States",jurisdiction:5,continuity:2,surveillance:5,lockIn:2,costExposure:1,total:15,riskLevel:"High",keyRisks:"Metadata harvested even with E2E encryption. Owned by Meta. Not suitable for sensitive organisational comms. No group data export."},
+            {id:8,name:"Dropbox",slug:"dropbox",category:"Cloud Storage",provider:"Dropbox Inc",hqCountry:"United States",dataHosting:"US (AWS)",jurisdiction:4,continuity:2,surveillance:3,lockIn:2,costExposure:3,total:14,riskLevel:"Medium",keyRisks:"Data in US. Moderate tracking. Reasonable export. Easy to switch. Prices have increased."},
+            {id:9,name:"Salesforce",slug:"salesforce",category:"CRM",provider:"Salesforce Inc",hqCountry:"United States",dataHosting:"US/EU options",jurisdiction:3,continuity:4,surveillance:3,lockIn:5,costExposure:5,total:20,riskLevel:"Critical",keyRisks:"Extremely deep lock-in. Proprietary data model. Very expensive. Migration is a major project. EU hosting available."},
+            {id:10,name:"HubSpot",slug:"hubspot",category:"CRM",provider:"HubSpot Inc",hqCountry:"United States",dataHosting:"US (AWS)",jurisdiction:4,continuity:3,surveillance:3,lockIn:4,costExposure:4,total:18,riskLevel:"High",keyRisks:"Data in US. Freemium hooks you in, prices escalate. Proprietary data model. Tracks website visitors extensively."},
+            {id:11,name:"Canva",slug:"canva",category:"Design",provider:"Canva Pty Ltd",hqCountry:"Australia",dataHosting:"US (AWS)",jurisdiction:4,continuity:2,surveillance:3,lockIn:3,costExposure:3,total:15,riskLevel:"High",keyRisks:"Data on US infrastructure. Teams prices increased 300% in 2024. AI features train on content. Templates/brand kits create dependency."},
+            {id:12,name:"Mailchimp",slug:"mailchimp",category:"Email Marketing",provider:"Intuit (Mailchimp)",hqCountry:"United States",dataHosting:"United States",jurisdiction:4,continuity:2,surveillance:4,lockIn:3,costExposure:4,total:17,riskLevel:"High",keyRisks:"Acquired by Intuit. Free tier severely cut. Data shared across Intuit products. Significant price increases since acquisition."},
+            {id:13,name:"Trello",slug:"trello",category:"Project Management",provider:"Atlassian",hqCountry:"Australia/US",dataHosting:"US (AWS)",jurisdiction:4,continuity:2,surveillance:3,lockIn:2,costExposure:3,total:14,riskLevel:"Medium",keyRisks:"Owned by Atlassian. Data in US. Free tier limited. Low lock-in \u2014 easy to export and switch."},
+            {id:14,name:"Monday.com",slug:"monday-com",category:"Project Management",provider:"Monday.com Ltd",hqCountry:"Israel/US",dataHosting:"US (AWS)",jurisdiction:4,continuity:2,surveillance:3,lockIn:3,costExposure:4,total:16,riskLevel:"High",keyRisks:"Data in US. Expensive per-seat pricing. Moderate lock-in through workflows. Tracks usage for AI."},
+            {id:15,name:"Asana",slug:"asana",category:"Project Management",provider:"Asana Inc",hqCountry:"United States",dataHosting:"US",jurisdiction:4,continuity:2,surveillance:3,lockIn:3,costExposure:4,total:16,riskLevel:"High",keyRisks:"Data in US. Per-seat pricing. Moderate lock-in. AI features in development. Good data export. Increasingly expensive."},
+            {id:16,name:"WordPress.com (hosted)",slug:"wordpress-com",category:"Website / CMS",provider:"Automattic Inc",hqCountry:"United States",dataHosting:"US",jurisdiction:3,continuity:2,surveillance:3,lockIn:3,costExposure:3,total:14,riskLevel:"Medium",keyRisks:"Hosted version is US-based. Self-hosted WordPress.org is open source and excellent. Lock-in through proprietary themes/plugins."},
+            {id:17,name:"Squarespace",slug:"squarespace",category:"Website / CMS",provider:"Squarespace Inc",hqCountry:"United States",dataHosting:"US",jurisdiction:4,continuity:2,surveillance:3,lockIn:4,costExposure:3,total:16,riskLevel:"High",keyRisks:"Data in US. Proprietary \u2014 cannot take your site elsewhere. Poor data export. Annual pricing creates lock-in."},
+            {id:18,name:"Wix",slug:"wix",category:"Website / CMS",provider:"Wix.com Ltd",hqCountry:"Israel/US",dataHosting:"US",jurisdiction:4,continuity:2,surveillance:3,lockIn:5,costExposure:3,total:17,riskLevel:"High",keyRisks:"Data in US. Highest lock-in of any CMS \u2014 virtually impossible to migrate. Aggressive upselling."},
+            {id:19,name:"SurveyMonkey",slug:"surveymonkey",category:"Forms / Surveys",provider:"Momentive Global",hqCountry:"United States",dataHosting:"US",jurisdiction:4,continuity:2,surveillance:3,lockIn:2,costExposure:4,total:15,riskLevel:"High",keyRisks:"Data in US. Expensive. Low lock-in (data exportable). Tracks respondent behaviour. Significant price increases."},
+            {id:20,name:"Typeform",slug:"typeform",category:"Forms / Surveys",provider:"Typeform SL",hqCountry:"Spain/US",dataHosting:"EU HQ but US infra",jurisdiction:3,continuity:2,surveillance:3,lockIn:2,costExposure:4,total:14,riskLevel:"Medium",keyRisks:"Spanish company but US cloud. GDPR compliant. Low lock-in. Expensive per-response pricing."},
+            {id:21,name:"Google Forms",slug:"google-forms",category:"Forms / Surveys",provider:"Google LLC",hqCountry:"United States",dataHosting:"US",jurisdiction:4,continuity:2,surveillance:5,lockIn:3,costExposure:1,total:15,riskLevel:"High",keyRisks:"All responses feed Google\u2019s data ecosystem. Free but data is harvested. Tied to Google Sheets."},
+            {id:22,name:"Meta (Facebook / Instagram)",slug:"meta",category:"Social Media",provider:"Meta Platforms",hqCountry:"United States",dataHosting:"US",jurisdiction:5,continuity:2,surveillance:5,lockIn:4,costExposure:2,total:18,riskLevel:"High",keyRisks:"Maximum surveillance. Data harvested for ads. Algorithmic control over reach. Community locked in platform."},
+            {id:23,name:"X / Twitter",slug:"x-twitter",category:"Social Media",provider:"X Corp",hqCountry:"United States",dataHosting:"US",jurisdiction:5,continuity:3,surveillance:5,lockIn:3,costExposure:2,total:18,riskLevel:"High",keyRisks:"Under Musk: unpredictable policy changes, API restricted, staff gutted. High continuity risk. Maximum surveillance."},
+            {id:24,name:"LinkedIn",slug:"linkedin",category:"Social Media",provider:"Microsoft Corp",hqCountry:"United States",dataHosting:"US",jurisdiction:4,continuity:2,surveillance:4,lockIn:4,costExposure:3,total:17,riskLevel:"High",keyRisks:"Microsoft-owned. Extensive professional data harvesting. AI training on posts/messages. Network lock-in."},
+            {id:25,name:"Calendly",slug:"calendly",category:"Scheduling",provider:"Calendly LLC",hqCountry:"United States",dataHosting:"US",jurisdiction:4,continuity:2,surveillance:3,lockIn:2,costExposure:3,total:14,riskLevel:"Medium",keyRisks:"Data in US. Calendar access is sensitive. Low lock-in. Easy to replace."},
+            {id:26,name:"Eventbrite",slug:"eventbrite",category:"Events",provider:"Eventbrite Inc",hqCountry:"United States",dataHosting:"US",jurisdiction:4,continuity:2,surveillance:3,lockIn:3,costExposure:3,total:15,riskLevel:"High",keyRisks:"Data in US. Attendee data harvested. Transaction fees. Moderate lock-in through event history."},
+            {id:27,name:"Amazon Web Services",slug:"aws",category:"Cloud Infrastructure",provider:"Amazon.com Inc",hqCountry:"United States",dataHosting:"UK/EU regions available",jurisdiction:3,continuity:3,surveillance:3,lockIn:4,costExposure:4,total:17,riskLevel:"High",keyRisks:"UK hosting available but Amazon is US-jurisdicted. Deep lock-in through proprietary services. CLOUD Act applies."}
+        ];
+
+        /* ========================================
+           ARCHETYPE PRESETS
+           ======================================== */
+        var ARCHETYPES = [
+            {
+                name: "Microsoft Heavy",
+                slug: "microsoft-heavy",
+                description: "Typical organisation running on the Microsoft ecosystem",
+                toolSlugs: ["microsoft-365", "microsoft-teams", "linkedin", "dropbox", "eventbrite"]
+            },
+            {
+                name: "Google Heavy",
+                slug: "google-heavy",
+                description: "Organisation built around Google's tools and platforms",
+                toolSlugs: ["google-workspace", "gmail-free", "google-forms", "canva", "meta"]
+            },
+            {
+                name: "Typical Small Charity",
+                slug: "typical-small-charity",
+                description: "Common stack for small UK charities and community organisations",
+                toolSlugs: ["google-workspace", "canva", "mailchimp", "trello", "zoom", "whatsapp"]
+            },
+            {
+                name: "Startup",
+                slug: "startup",
+                description: "Fast-moving startup or social enterprise tech stack",
+                toolSlugs: ["slack", "aws", "hubspot", "asana", "calendly", "zoom"]
+            },
+            {
+                name: "AI Explorer",
+                slug: "ai-explorer",
+                description: "Organisation heavily integrating AI and cloud services",
+                toolSlugs: ["google-workspace", "slack", "aws", "zoom", "monday-com"]
+            },
+            {
+                name: "Legacy Stalwarts",
+                slug: "legacy-stalwarts",
+                description: "Established organisation with deep enterprise tool commitments",
+                toolSlugs: ["microsoft-365", "salesforce", "surveymonkey", "eventbrite", "wordpress-com"]
+            }
+        ];
+
+        var DIMENSIONS = ['jurisdiction', 'continuity', 'surveillance', 'lockIn', 'costExposure'];
+        var DIM_LABELS = {
+            jurisdiction: 'Jurisdiction',
+            continuity: 'Continuity',
+            surveillance: 'Surveillance',
+            lockIn: 'Lock-in',
+            costExposure: 'Cost Exposure'
+        };
+
+        /* ========================================
+           STATE
+           ======================================== */
+        var selectedToolIds = [];
+        var radarChart = null;
+
+        /* ========================================
+           HELPERS
+           ======================================== */
+        function getToolBySlug(slug) {
+            for (var i = 0; i < TOOLS.length; i++) {
+                if (TOOLS[i].slug === slug) return TOOLS[i];
+            }
+            return null;
+        }
+
+        function getToolById(id) {
+            for (var i = 0; i < TOOLS.length; i++) {
+                if (TOOLS[i].id === id) return TOOLS[i];
+            }
+            return null;
+        }
+
+        function slugify(name) {
+            return name.toLowerCase()
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/^-|-$/g, '');
+        }
+
+        function getRiskClass(level) {
+            return (level || '').toLowerCase();
+        }
+
+        /* ========================================
+           RENDER ARCHETYPES
+           ======================================== */
+        function renderArchetypes() {
+            var grid = document.getElementById('archetype-grid');
+            grid.innerHTML = '';
+            ARCHETYPES.forEach(function(arch) {
+                var btn = document.createElement('button');
+                btn.className = 'archetype-card';
+                btn.setAttribute('role', 'listitem');
+                btn.setAttribute('type', 'button');
+                btn.innerHTML =
+                    '<h3>' + arch.name + '</h3>' +
+                    '<p>' + arch.description + '</p>' +
+                    '<span class="tool-count">' + arch.toolSlugs.length + ' tools</span>';
+                btn.addEventListener('click', function() {
+                    selectArchetype(arch);
+                });
+                grid.appendChild(btn);
+            });
+        }
+
+        function selectArchetype(arch) {
+            // Clear previous selection
+            selectedToolIds = [];
+            var cards = document.querySelectorAll('.archetype-card');
+            cards.forEach(function(c) { c.classList.remove('selected'); });
+
+            // Find the clicked card and mark it
+            var allCards = document.querySelectorAll('.archetype-card');
+            ARCHETYPES.forEach(function(a, i) {
+                if (a.slug === arch.slug && allCards[i]) {
+                    allCards[i].classList.add('selected');
+                }
+            });
+
+            // Add tools from this archetype
+            arch.toolSlugs.forEach(function(slug) {
+                var tool = getToolBySlug(slug);
+                if (tool && selectedToolIds.indexOf(tool.id) === -1) {
+                    selectedToolIds.push(tool.id);
+                }
+            });
+
+            renderSelectedTools();
+            updateAssessButton();
+        }
+
+        /* ========================================
+           SEARCH / AUTOCOMPLETE
+           ======================================== */
+        function initSearch() {
+            var input = document.getElementById('tool-search');
+            var list = document.getElementById('autocomplete-list');
+            var highlightedIndex = -1;
+
+            input.addEventListener('input', function() {
+                var query = input.value.trim().toLowerCase();
+                list.innerHTML = '';
+                highlightedIndex = -1;
+
+                if (query.length < 2) {
+                    input.setAttribute('aria-expanded', 'false');
+                    return;
+                }
+
+                var matches = TOOLS.filter(function(t) {
+                    return (
+                        t.name.toLowerCase().indexOf(query) !== -1 ||
+                        t.category.toLowerCase().indexOf(query) !== -1 ||
+                        t.provider.toLowerCase().indexOf(query) !== -1
+                    ) && selectedToolIds.indexOf(t.id) === -1;
+                });
+
+                if (matches.length === 0) {
+                    input.setAttribute('aria-expanded', 'false');
+                    return;
+                }
+
+                input.setAttribute('aria-expanded', 'true');
+
+                matches.forEach(function(tool, idx) {
+                    var li = document.createElement('li');
+                    li.className = 'autocomplete-item';
+                    li.setAttribute('role', 'option');
+                    li.setAttribute('id', 'autocomplete-option-' + idx);
+                    li.innerHTML = tool.name + '<span class="category">' + tool.category + '</span>';
+                    li.addEventListener('click', function() {
+                        addTool(tool.id);
+                        input.value = '';
+                        list.innerHTML = '';
+                        input.setAttribute('aria-expanded', 'false');
+                        input.focus();
+                    });
+                    list.appendChild(li);
+                });
+            });
+
+            // Keyboard navigation
+            input.addEventListener('keydown', function(e) {
+                var items = list.querySelectorAll('.autocomplete-item');
+                if (items.length === 0) return;
+
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    highlightedIndex = Math.min(highlightedIndex + 1, items.length - 1);
+                    updateHighlight(items);
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    highlightedIndex = Math.max(highlightedIndex - 1, 0);
+                    updateHighlight(items);
+                } else if (e.key === 'Enter' && highlightedIndex >= 0) {
+                    e.preventDefault();
+                    items[highlightedIndex].click();
+                } else if (e.key === 'Escape') {
+                    list.innerHTML = '';
+                    input.setAttribute('aria-expanded', 'false');
+                    highlightedIndex = -1;
+                }
+            });
+
+            function updateHighlight(items) {
+                items.forEach(function(item, i) {
+                    if (i === highlightedIndex) {
+                        item.classList.add('highlighted');
+                        input.setAttribute('aria-activedescendant', item.id);
+                    } else {
+                        item.classList.remove('highlighted');
+                    }
+                });
+            }
+
+            // Close on click outside
+            document.addEventListener('click', function(e) {
+                if (!input.contains(e.target) && !list.contains(e.target)) {
+                    list.innerHTML = '';
+                    input.setAttribute('aria-expanded', 'false');
+                }
+            });
+        }
+
+        /* ========================================
+           TOOL SELECTION
+           ======================================== */
+        function addTool(id) {
+            if (selectedToolIds.indexOf(id) === -1) {
+                selectedToolIds.push(id);
+                renderSelectedTools();
+                updateAssessButton();
+            }
+        }
+
+        function removeTool(id) {
+            selectedToolIds = selectedToolIds.filter(function(tid) { return tid !== id; });
+            // Clear archetype selection if tools changed
+            document.querySelectorAll('.archetype-card').forEach(function(c) { c.classList.remove('selected'); });
+            renderSelectedTools();
+            updateAssessButton();
+
+            // If results are showing, update them live
+            if (!document.getElementById('results-section').hidden) {
+                showResults();
+            }
+        }
+
+        function renderSelectedTools() {
+            var container = document.getElementById('selected-tools');
+            container.innerHTML = '';
+            selectedToolIds.forEach(function(id) {
+                var tool = getToolById(id);
+                if (!tool) return;
+                var chip = document.createElement('span');
+                chip.className = 'tool-chip';
+
+                var nameSpan = document.createElement('span');
+                nameSpan.textContent = tool.name;
+
+                var btn = document.createElement('button');
+                btn.className = 'chip-remove';
+                btn.setAttribute('type', 'button');
+                btn.setAttribute('aria-label', 'Remove ' + tool.name);
+                btn.innerHTML = '&times;';
+                btn.addEventListener('click', function() { removeTool(id); });
+
+                chip.appendChild(nameSpan);
+                chip.appendChild(btn);
+                container.appendChild(chip);
+            });
+        }
+
+        function updateAssessButton() {
+            var btn = document.getElementById('assess-btn');
+            var hasTools = selectedToolIds.length > 0;
+            btn.disabled = !hasTools;
+            btn.setAttribute('aria-disabled', String(!hasTools));
+        }
+
+        /* ========================================
+           RENDER RESULTS
+           ======================================== */
+        function showResults() {
+            var tools = selectedToolIds.map(getToolById).filter(Boolean);
+            if (tools.length === 0) return;
+
+            renderHeatmap(tools);
+            renderRadarChart(tools);
+            renderSummary(tools);
+
+            var resultsSection = document.getElementById('results-section');
+            var ctaSection = document.getElementById('cta-section');
+            resultsSection.hidden = false;
+            ctaSection.hidden = false;
+
+            // Scroll to results
+            resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+            // Apply mobile cards if needed
+            checkMobileHeatmap();
+        }
+
+        function renderHeatmap(tools) {
+            var tbody = document.getElementById('heatmap-body');
+            tbody.innerHTML = '';
+
+            // Sort by total descending
+            var sorted = tools.slice().sort(function(a, b) { return b.total - a.total; });
+
+            sorted.forEach(function(tool) {
+                // Main row
+                var tr = document.createElement('tr');
+                tr.setAttribute('tabindex', '0');
+                tr.setAttribute('aria-label', tool.name + '. Total risk: ' + tool.total + ' out of 25. ' + tool.riskLevel + ' risk. Click to expand.');
+
+                tr.innerHTML =
+                    '<td><span class="expand-indicator" aria-hidden="true"></span>' + tool.name +
+                    '<span class="tool-category">' + tool.category + '</span></td>' +
+                    '<td data-label="Jurisdiction"><span class="score-cell score-' + tool.jurisdiction + '" aria-label="Jurisdiction: ' + tool.jurisdiction + ' out of 5">' + tool.jurisdiction + '</span></td>' +
+                    '<td data-label="Continuity"><span class="score-cell score-' + tool.continuity + '" aria-label="Continuity: ' + tool.continuity + ' out of 5">' + tool.continuity + '</span></td>' +
+                    '<td data-label="Surveillance"><span class="score-cell score-' + tool.surveillance + '" aria-label="Surveillance: ' + tool.surveillance + ' out of 5">' + tool.surveillance + '</span></td>' +
+                    '<td data-label="Lock-in"><span class="score-cell score-' + tool.lockIn + '" aria-label="Lock-in: ' + tool.lockIn + ' out of 5">' + tool.lockIn + '</span></td>' +
+                    '<td data-label="Cost"><span class="score-cell score-' + tool.costExposure + '" aria-label="Cost exposure: ' + tool.costExposure + ' out of 5">' + tool.costExposure + '</span></td>' +
+                    '<td data-label="Total" class="total-cell">' + tool.total + '/25</td>' +
+                    '<td data-label="Risk"><span class="risk-badge ' + getRiskClass(tool.riskLevel) + '">' + tool.riskLevel + '</span></td>';
+
+                // Key risks row (hidden by default)
+                var risksRow = document.createElement('tr');
+                risksRow.className = 'key-risks-row';
+                risksRow.hidden = true;
+                risksRow.innerHTML = '<td colspan="8"><div class="key-risks-content"><strong>Key risks:</strong> ' + tool.keyRisks + '</div></td>';
+
+                // Toggle expand
+                function toggleRow(mainRow, detailRow) {
+                    return function() {
+                        var isExpanded = !detailRow.hidden;
+                        detailRow.hidden = isExpanded;
+                        mainRow.classList.toggle('expanded', !isExpanded);
+                    };
+                }
+
+                tr.addEventListener('click', toggleRow(tr, risksRow));
+                tr.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        toggleRow(tr, risksRow)();
+                    }
+                });
+
+                tbody.appendChild(tr);
+                tbody.appendChild(risksRow);
+            });
+        }
+
+        function renderRadarChart(tools) {
+            var ctx = document.getElementById('radar-chart');
+            if (!ctx) return;
+
+            // Calculate averages
+            var avgs = {};
+            DIMENSIONS.forEach(function(dim) {
+                var sum = 0;
+                tools.forEach(function(t) { sum += t[dim]; });
+                avgs[dim] = parseFloat((sum / tools.length).toFixed(1));
+            });
+
+            var labels = DIMENSIONS.map(function(d) { return DIM_LABELS[d]; });
+            var data = DIMENSIONS.map(function(d) { return avgs[d]; });
+
+            // Screen reader text
+            var altText = 'Average risk scores: ' + DIMENSIONS.map(function(d) {
+                return DIM_LABELS[d] + ': ' + avgs[d] + ' out of 5';
+            }).join('. ') + '.';
+            document.getElementById('radar-text-alt').textContent = altText;
+
+            if (typeof Chart === 'undefined') {
+                // Chart.js not loaded yet; show text fallback
+                ctx.parentElement.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:var(--space-m);">Chart loading failed. ' + altText + '</p>';
+                return;
+            }
+
+            if (radarChart) {
+                radarChart.data.datasets[0].data = data;
+                radarChart.update();
+                return;
+            }
+
+            var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+            radarChart = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Your Stack',
+                        data: data,
+                        backgroundColor: 'rgba(26, 35, 50, 0.15)',
+                        borderColor: '#4A90D9',
+                        borderWidth: 2,
+                        pointBackgroundColor: '#4A90D9',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 1,
+                        pointRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    animation: {
+                        duration: prefersReducedMotion ? 0 : 600
+                    },
+                    scales: {
+                        r: {
+                            min: 0,
+                            max: 5,
+                            ticks: {
+                                stepSize: 1,
+                                font: { family: "'DM Sans', sans-serif", size: 11 },
+                                backdropColor: 'transparent'
+                            },
+                            grid: {
+                                color: 'rgba(26, 35, 50, 0.08)'
+                            },
+                            angleLines: {
+                                color: 'rgba(26, 35, 50, 0.08)'
+                            },
+                            pointLabels: {
+                                font: { family: "'DM Sans', sans-serif", size: 12, weight: 500 },
+                                color: '#3D4A5C'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+
+        function renderSummary(tools) {
+            var container = document.getElementById('summary-text');
+
+            // Calculate aggregate scores
+            var avgs = {};
+            var totals = {};
+            DIMENSIONS.forEach(function(dim) {
+                var sum = 0;
+                tools.forEach(function(t) { sum += t[dim]; });
+                avgs[dim] = parseFloat((sum / tools.length).toFixed(1));
+                totals[dim] = sum;
+            });
+
+            var avgTotal = parseFloat((tools.reduce(function(s, t) { return s + t.total; }, 0) / tools.length).toFixed(1));
+
+            // Find worst dimension
+            var worstDim = DIMENSIONS[0];
+            DIMENSIONS.forEach(function(dim) {
+                if (avgs[dim] > avgs[worstDim]) worstDim = dim;
+            });
+
+            // Find worst tool per dimension
+            var worstToolForDim = tools[0];
+            tools.forEach(function(t) {
+                if (t[worstDim] > worstToolForDim[worstDim]) worstToolForDim = t;
+            });
+
+            // Find most locked-in tool
+            var mostLockedIn = tools[0];
+            tools.forEach(function(t) {
+                if (t.lockIn > mostLockedIn.lockIn) mostLockedIn = t;
+            });
+
+            // Risk category
+            var riskCategory = 'Low';
+            if (avgTotal >= 18) riskCategory = 'Critical';
+            else if (avgTotal >= 15) riskCategory = 'High';
+            else if (avgTotal >= 11) riskCategory = 'Moderate';
+
+            var summaryHTML =
+                '<p>Your stack of <strong>' + tools.length + ' tool' + (tools.length > 1 ? 's' : '') + '</strong> ' +
+                'scores <strong>' + avgTotal + '/25</strong> on average, placing it in the ' +
+                '<strong>' + riskCategory + '</strong> risk category.</p>' +
+                '<p style="margin-top:0.75em;">Your biggest exposure is <strong>' + DIM_LABELS[worstDim] +
+                '</strong> (' + avgs[worstDim] + '/5), driven primarily by <strong>' + worstToolForDim.name + '</strong>.';
+
+            if (mostLockedIn.slug !== worstToolForDim.slug && mostLockedIn.lockIn >= 4) {
+                summaryHTML += ' Your most locked-in tool is <strong>' + mostLockedIn.name +
+                    '</strong> (lock-in: ' + mostLockedIn.lockIn + '/5).';
+            }
+
+            summaryHTML += '</p>';
+
+            // Count critical/high tools
+            var criticalCount = tools.filter(function(t) { return t.riskLevel === 'Critical'; }).length;
+            var highCount = tools.filter(function(t) { return t.riskLevel === 'High'; }).length;
+
+            if (criticalCount > 0 || highCount > 0) {
+                summaryHTML += '<p style="margin-top:0.75em;">';
+                if (criticalCount > 0) {
+                    summaryHTML += '<strong>' + criticalCount + '</strong> tool' + (criticalCount > 1 ? 's' : '') + ' rated Critical risk. ';
+                }
+                if (highCount > 0) {
+                    summaryHTML += '<strong>' + highCount + '</strong> tool' + (highCount > 1 ? 's' : '') + ' rated High risk.';
+                }
+                summaryHTML += '</p>';
+            }
+
+            container.innerHTML = summaryHTML;
+        }
+
+        /* ========================================
+           EXPORT: PDF
+           ======================================== */
+        function downloadPDF() {
+            var resultsSection = document.getElementById('results-section');
+            if (!resultsSection || typeof html2pdf === 'undefined') {
+                alert('PDF export is not available. Please try again in a moment.');
+                return;
+            }
+
+            var btn = document.getElementById('btn-pdf');
+            btn.textContent = 'Generating\u2026';
+            btn.disabled = true;
+
+            var opt = {
+                margin: [10, 10, 10, 10],
+                filename: 'techfreedom-risk-assessment.pdf',
+                image: { type: 'jpeg', quality: 0.95 },
+                html2canvas: { scale: 2, useCORS: true },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+            };
+
+            html2pdf().set(opt).from(resultsSection).save().then(function() {
+                btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" style="width:1em;height:1em"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 18 15 15"/></svg> Download PDF';
+                btn.disabled = false;
+            }).catch(function() {
+                btn.textContent = 'Download PDF';
+                btn.disabled = false;
+            });
+        }
+
+        /* ========================================
+           EXPORT: SHARE URL
+           ======================================== */
+        function generateShareURL() {
+            var tools = selectedToolIds.map(getToolById).filter(Boolean);
+            var slugs = tools.map(function(t) { return t.slug; });
+            var url = window.location.origin + '/assess/?tools=' + slugs.join(',');
+            return url;
+        }
+
+        function shareURL() {
+            var url = generateShareURL();
+            var display = document.getElementById('share-url-display');
+            var feedback = document.getElementById('copy-feedback');
+
+            display.textContent = url;
+            display.classList.add('visible');
+
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(url).then(function() {
+                    feedback.classList.add('show');
+                    setTimeout(function() { feedback.classList.remove('show'); }, 2000);
+                });
+            }
+
+            // Update browser URL without reload
+            if (window.history && window.history.replaceState) {
+                var slugs = selectedToolIds.map(getToolById).filter(Boolean).map(function(t) { return t.slug; });
+                window.history.replaceState(null, '', '?tools=' + slugs.join(','));
+            }
+        }
+
+        /* ========================================
+           PARSE URL PARAMS
+           ======================================== */
+        function parseURLParams() {
+            var params = new URLSearchParams(window.location.search);
+            var toolsParam = params.get('tools');
+            if (!toolsParam) return false;
+
+            var slugs = toolsParam.split(',');
+            slugs.forEach(function(slug) {
+                var tool = getToolBySlug(slug.trim());
+                if (tool && selectedToolIds.indexOf(tool.id) === -1) {
+                    selectedToolIds.push(tool.id);
+                }
+            });
+
+            if (selectedToolIds.length > 0) {
+                renderSelectedTools();
+                updateAssessButton();
+                showResults();
+                return true;
+            }
+            return false;
+        }
+
+        /* ========================================
+           MOBILE HEATMAP
+           ======================================== */
+        function checkMobileHeatmap() {
+            var wrapper = document.getElementById('heatmap-wrapper');
+            if (window.innerWidth <= 768) {
+                wrapper.classList.add('mobile-cards');
+            } else {
+                wrapper.classList.remove('mobile-cards');
+            }
+        }
+
+        /* ========================================
+           SCROLL REVEALS
+           ======================================== */
+        function initScrollReveals() {
+            var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+            if (!prefersReducedMotion) {
+                var observer = new IntersectionObserver(function(entries) {
+                    entries.forEach(function(entry) {
+                        if (entry.isIntersecting) {
+                            entry.target.classList.add('visible');
+                            observer.unobserve(entry.target);
+                        }
+                    });
+                }, {
+                    threshold: 0.15,
+                    rootMargin: '0px 0px -60px 0px'
+                });
+
+                document.querySelectorAll('.reveal').forEach(function(el) {
+                    observer.observe(el);
+                });
+            } else {
+                document.querySelectorAll('.reveal').forEach(function(el) {
+                    el.classList.add('visible');
+                });
+            }
+        }
+
+        /* ========================================
+           NAV SCROLL STATE
+           ======================================== */
+        function initNav() {
+            var nav = document.querySelector('.site-nav');
+            if (!nav) return;
+
+            // Nav starts scrolled on this page (no hero)
+            nav.classList.add('scrolled');
+
+            window.addEventListener('scroll', function() {
+                if (window.pageYOffset > 40) {
+                    nav.classList.add('scrolled');
+                } else {
+                    nav.classList.remove('scrolled');
+                }
+            }, { passive: true });
+        }
+
+        /* ========================================
+           INIT
+           ======================================== */
+        function init() {
+            initNav();
+            initScrollReveals();
+            renderArchetypes();
+            initSearch();
+
+            // Wire up assess button
+            document.getElementById('assess-btn').addEventListener('click', function() {
+                showResults();
+            });
+
+            // Wire up export buttons
+            document.getElementById('btn-pdf').addEventListener('click', downloadPDF);
+            document.getElementById('btn-share').addEventListener('click', shareURL);
+
+            // Check for shared URL
+            parseURLParams();
+
+            // Responsive heatmap
+            window.addEventListener('resize', checkMobileHeatmap);
+        }
+
+        // Wait for DOM
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+    })();
+    </script>
+</body>
+</html>
