@@ -1,15 +1,19 @@
 #!/usr/bin/env python3
 """
-TechFreedom — PocketBase Collection Setup & Data Import
+TechFreedom — PocketBase Collection Setup & Data Import / Static JSON Export
 
 Creates all collections with proper schemas and API rules,
 then imports tools, alternatives, archetypes, and scoring guide data.
 
-Usage:
+Usage (PocketBase import):
     pip3 install openpyxl requests
     python3 import-data.py --url https://api.techfreedom.eu --email admin@techfreedom.eu --password YOUR_PASSWORD --xlsx techfreedom-database.xlsx
 
-Prerequisites:
+Usage (static JSON export — no PocketBase needed):
+    pip3 install openpyxl
+    python3 import-data.py --xlsx techfreedom-database.xlsx --export-json assess/data/
+
+Prerequisites (PocketBase import only):
     1. PocketBase running and accessible
     2. Admin account created via the PocketBase UI (https://api.techfreedom.eu/_/)
 """
@@ -321,15 +325,116 @@ class PocketBaseClient:
 # Main
 # ============================================================
 
+def read_tools_from_xlsx(xlsx_path):
+    """Read tools from xlsx and return list of dicts in internal format."""
+    import openpyxl
+
+    wb = openpyxl.load_workbook(xlsx_path, data_only=True)
+    ws_tools = wb[wb.sheetnames[0]]
+    tools = []
+
+    for i, row in enumerate(ws_tools.iter_rows(min_row=2)):
+        vals = [c.value for c in row]
+        if vals[0] is None:
+            break
+
+        name = str(vals[0])
+        slug = slugify(name)
+
+        def safe_int(v):
+            try:
+                return int(v)
+            except (TypeError, ValueError):
+                return 0
+
+        tools.append({
+            "id": i + 1,
+            "name": name,
+            "slug": slug,
+            "category": str(vals[1] or ""),
+            "provider": str(vals[2] or ""),
+            "hqCountry": str(vals[3] or ""),
+            "dataHosting": str(vals[4] or ""),
+            "jurisdiction": safe_int(vals[5]),
+            "continuity": safe_int(vals[6]),
+            "surveillance": safe_int(vals[7]),
+            "lockIn": safe_int(vals[8]),
+            "costExposure": safe_int(vals[9]),
+            "total": safe_int(vals[10]),
+            "riskLevel": str(vals[11] or ""),
+            "keyRisks": str(vals[12] or ""),
+        })
+
+    return tools
+
+
+def build_archetypes(tools):
+    """Build archetypes with toolSlugs referencing tools by slug."""
+    tool_slugs_set = {t["slug"] for t in tools}
+    archetypes = []
+
+    for arch in ARCHETYPES:
+        tool_slugs = [s for s in arch["tool_slugs"] if s in tool_slugs_set]
+        archetypes.append({
+            "name": arch["name"],
+            "slug": arch["slug"],
+            "description": arch["description"],
+            "toolSlugs": tool_slugs,
+        })
+
+    return archetypes
+
+
+def export_json(xlsx_path, output_dir):
+    """Export tools.json and archetypes.json to output_dir."""
+    import os
+
+    os.makedirs(output_dir, exist_ok=True)
+
+    print("\nReading xlsx...")
+    tools = read_tools_from_xlsx(xlsx_path)
+    print(f"  Found {len(tools)} tools")
+
+    archetypes = build_archetypes(tools)
+    print(f"  Built {len(archetypes)} archetypes")
+
+    tools_path = os.path.join(output_dir, "tools.json")
+    with open(tools_path, "w", encoding="utf-8") as f:
+        json.dump(tools, f, indent=2, ensure_ascii=False)
+    print(f"  Wrote {tools_path}")
+
+    archetypes_path = os.path.join(output_dir, "archetypes.json")
+    with open(archetypes_path, "w", encoding="utf-8") as f:
+        json.dump(archetypes, f, indent=2, ensure_ascii=False)
+    print(f"  Wrote {archetypes_path}")
+
+    print("\nDone! Static JSON files ready for deployment.")
+
+
 def main():
     parser = argparse.ArgumentParser(description="TechFreedom PocketBase setup & data import")
-    parser.add_argument("--url", required=True, help="PocketBase URL (e.g. https://api.techfreedom.eu)")
-    parser.add_argument("--email", required=True, help="Admin email")
-    parser.add_argument("--password", required=True, help="Admin password")
+    parser.add_argument("--url", help="PocketBase URL (e.g. https://api.techfreedom.eu)")
+    parser.add_argument("--email", help="Admin email")
+    parser.add_argument("--password", help="Admin password")
     parser.add_argument("--xlsx", required=True, help="Path to techfreedom-database.xlsx")
+    parser.add_argument("--export-json", metavar="DIR", help="Export tools.json and archetypes.json to DIR (no PocketBase needed)")
     parser.add_argument("--skip-collections", action="store_true", help="Skip collection creation")
     parser.add_argument("--skip-import", action="store_true", help="Skip data import")
     args = parser.parse_args()
+
+    # ---- Static JSON export mode ----
+    if args.export_json:
+        try:
+            import openpyxl  # noqa: F401
+        except ImportError:
+            print("ERROR: openpyxl not installed. Run: pip3 install openpyxl")
+            sys.exit(1)
+        export_json(args.xlsx, args.export_json)
+        return
+
+    # ---- PocketBase import mode — requires credentials ----
+    if not args.url or not args.email or not args.password:
+        parser.error("--url, --email, and --password are required for PocketBase import (or use --export-json)")
 
     pb = PocketBaseClient(args.url)
 

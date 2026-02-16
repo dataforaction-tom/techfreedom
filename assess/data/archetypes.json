@@ -1,0 +1,38 @@
+[
+  {
+    "name": "Microsoft Heavy",
+    "slug": "microsoft-heavy",
+    "description": "Typical organisation running on the Microsoft ecosystem",
+    "toolSlugs": ["microsoft-365", "microsoft-teams", "linkedin", "dropbox", "eventbrite"]
+  },
+  {
+    "name": "Google Heavy",
+    "slug": "google-heavy",
+    "description": "Organisation built around Google's tools and platforms",
+    "toolSlugs": ["google-workspace", "gmail-free", "google-forms", "canva", "meta"]
+  },
+  {
+    "name": "Typical Small Charity",
+    "slug": "typical-small-charity",
+    "description": "Common stack for small UK charities and community organisations",
+    "toolSlugs": ["google-workspace", "canva", "mailchimp", "trello", "zoom", "whatsapp"]
+  },
+  {
+    "name": "Startup",
+    "slug": "startup",
+    "description": "Fast-moving startup or social enterprise tech stack",
+    "toolSlugs": ["slack", "aws", "hubspot", "asana", "calendly", "zoom"]
+  },
+  {
+    "name": "AI Explorer",
+    "slug": "ai-explorer",
+    "description": "Organisation heavily integrating AI and cloud services",
+    "toolSlugs": ["google-workspace", "slack", "aws", "zoom", "monday-com"]
+  },
+  {
+    "name": "Legacy Stalwarts",
+    "slug": "legacy-stalwarts",
+    "description": "Established organisation with deep enterprise tool commitments",
+    "toolSlugs": ["microsoft-365", "salesforce", "surveymonkey", "eventbrite", "wordpress-com"]
+  }
+]

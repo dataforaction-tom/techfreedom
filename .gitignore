@@ -11,3 +11,4 @@ techfreedom-plan.md
 *.png
 !og-image.png
 .playwright-mcp/
+techfreedom-database.xlsx
