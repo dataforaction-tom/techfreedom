@@ -30,8 +30,9 @@
     <link rel="stylesheet" href="../css/shared.css">
     <!-- Chart.js for radar chart -->
     <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-    <!-- html2pdf.js for PDF export -->
-    <script defer src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.2/dist/html2pdf.bundle.min.js"></script>
+    <!-- PDF export: html2canvas + jsPDF (loaded separately to avoid html2pdf's opacity-0 overlay bug) -->
+    <script defer src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
     <style>
         /* ========================================
            ASSESSMENT PAGE STYLES
@@ -550,7 +551,7 @@
             display: flex;
             gap: var(--space-s);
             flex-wrap: wrap;
-            margin-bottom: var(--space-xl);
+            margin-bottom: var(--space-m);
         }
 
         .btn-secondary {
@@ -613,11 +614,47 @@
             opacity: 1;
         }
 
+        /* --- Next Step Nudge --- */
+        .next-step-nudge {
+            text-align: center;
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            padding: var(--space-s) 0;
+        }
+
+        .next-step-nudge[hidden] {
+            display: none;
+        }
+
+        .nudge-arrow {
+            display: inline-block;
+            color: var(--accent-sky);
+            font-size: 1.1em;
+            margin-right: 0.3em;
+            animation: nudgeBounce 1.5s ease-in-out infinite;
+        }
+
+        @keyframes nudgeBounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(4px); }
+        }
+
+        .next-step-nudge a {
+            color: var(--accent-sky);
+            font-weight: 500;
+            text-decoration: none;
+            border-bottom: 1px solid transparent;
+            transition: border-color 0.2s ease;
+        }
+
+        .next-step-nudge a:hover {
+            border-bottom-color: var(--accent-sky);
+        }
+
         /* --- CTA Section --- */
         .cta-section {
-            padding: var(--space-xl) 0;
+            padding: var(--space-l) 0 var(--space-xl) 0;
             background: linear-gradient(180deg, var(--bg-primary) 0%, var(--bg-warm) 40%, var(--bg-mist) 100%);
-            border-top: 1px solid var(--horizon);
         }
 
         .cta-section[hidden] {
@@ -958,6 +995,11 @@
                     <span class="copy-feedback" id="copy-feedback">Link copied!</span>
                     <div class="share-url-display" id="share-url-display"></div>
                 </div>
+
+                <div class="next-step-nudge" id="next-step-nudge" hidden>
+                    <span class="nudge-arrow" aria-hidden="true">&#8595;</span>
+                    Ready to take action? <a href="#cta-section">See your options below</a>
+                </div>
             </div>
         </section>
 
@@ -1026,7 +1068,9 @@
         /* ========================================
            CONFIGURATION
            ======================================== */
+        var DATA_SOURCE = 'static';   // 'static' = JSON files, 'api' = PocketBase
         var API_BASE = 'https://api.techfreedom.eu';
+        var STATIC_BASE = 'data';
 
         /* ========================================
            TOOL DATA (embedded fallback)
@@ -1363,6 +1407,7 @@
             var ctaSection = document.getElementById('cta-section');
             resultsSection.hidden = false;
             ctaSection.hidden = false;
+            document.getElementById('next-step-nudge').hidden = false;
 
             // Scroll to results
             resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1584,7 +1629,7 @@
            ======================================== */
         function downloadPDF() {
             var resultsSection = document.getElementById('results-section');
-            if (!resultsSection || typeof html2pdf === 'undefined') {
+            if (!resultsSection || typeof html2canvas === 'undefined' || typeof jspdf === 'undefined') {
                 alert('PDF export is not available. Please try again in a moment.');
                 return;
             }
@@ -1593,21 +1638,49 @@
             btn.textContent = 'Generating\u2026';
             btn.disabled = true;
 
-            var opt = {
-                margin: [10, 10, 10, 10],
-                filename: 'techfreedom-risk-assessment.pdf',
-                image: { type: 'jpeg', quality: 0.95 },
-                html2canvas: { scale: 2, useCORS: true },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
-            };
+            var pdfBtnIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" style="width:1em;height:1em"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 18 15 15"/></svg> Download PDF';
 
-            html2pdf().set(opt).from(resultsSection).save().then(function() {
-                btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" style="width:1em;height:1em"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 18 15 15"/></svg> Download PDF';
-                btn.disabled = false;
-            }).catch(function() {
-                btn.textContent = 'Download PDF';
-                btn.disabled = false;
-            });
+            // Wait for radar chart animation (600ms) to complete
+            setTimeout(function() {
+                html2canvas(resultsSection, {
+                    scale: 2,
+                    useCORS: true,
+                    windowWidth: 1200,
+                    onclone: function(clonedDoc) {
+                        // Remove grain texture overlay
+                        var fix = clonedDoc.createElement('style');
+                        fix.textContent = 'body::after{display:none!important}';
+                        clonedDoc.head.appendChild(fix);
+                        // Hide elements not needed in PDF
+                        var ea = clonedDoc.querySelector('.export-actions');
+                        if (ea) ea.style.display = 'none';
+                        var nudge = clonedDoc.getElementById('next-step-nudge');
+                        if (nudge) nudge.style.display = 'none';
+                    }
+                }).then(function(canvas) {
+                    var margin = 10;
+                    var pdf = new jspdf.jsPDF({ unit: 'mm', format: 'a4', orientation: 'landscape' });
+                    var pageW = pdf.internal.pageSize.getWidth() - 2 * margin;
+                    var pageH = pdf.internal.pageSize.getHeight() - 2 * margin;
+                    var imgH = (canvas.height * pageW) / canvas.width;
+                    var imgData = canvas.toDataURL('image/jpeg', 0.95);
+
+                    // Multi-page: tile the full-width image across pages
+                    var y = 0;
+                    while (y < imgH) {
+                        if (y > 0) pdf.addPage();
+                        pdf.addImage(imgData, 'JPEG', margin, margin - y, pageW, imgH);
+                        y += pageH;
+                    }
+
+                    pdf.save('techfreedom-risk-assessment.pdf');
+                    btn.innerHTML = pdfBtnIcon;
+                    btn.disabled = false;
+                }).catch(function() {
+                    btn.textContent = 'Download PDF';
+                    btn.disabled = false;
+                });
+            }, 700);
         }
 
         /* ========================================
@@ -1728,28 +1801,45 @@
         }
 
         /* ========================================
-           POCKETBASE DATA FETCH
-           Tries API first, falls back to embedded data.
+           DATA FETCH — twin-track (static JSON or PocketBase API)
+           Falls back to embedded data on any failure.
            ======================================== */
-        function fetchFromAPI() {
-            if (!window.fetch) return Promise.reject('No fetch');
 
+        function fetchWithTimeout(url, ms) {
+            return new Promise(function(resolve, reject) {
+                var timer = setTimeout(function() { reject(new Error('timeout')); }, ms);
+                fetch(url).then(function(r) {
+                    clearTimeout(timer);
+                    if (!r.ok) reject(new Error(r.status));
+                    else resolve(r.json());
+                }).catch(function(err) {
+                    clearTimeout(timer);
+                    reject(err);
+                });
+            });
+        }
+
+        function fetchFromStatic() {
+            return Promise.all([
+                fetchWithTimeout(STATIC_BASE + '/tools.json', 2000),
+                fetchWithTimeout(STATIC_BASE + '/archetypes.json', 2000)
+            ]).then(function(results) {
+                var toolData = results[0];
+                var archData = results[1];
+
+                if (!toolData || toolData.length === 0) throw new Error('No tools in static JSON');
+
+                TOOLS = toolData;
+                ARCHETYPES = archData;
+
+                console.log('TechFreedom: Loaded ' + TOOLS.length + ' tools from static JSON');
+                return true;
+            });
+        }
+
+        function fetchFromPocketBase() {
             var toolsUrl = API_BASE + '/api/collections/tools/records?perPage=50&sort=name';
             var archetypesUrl = API_BASE + '/api/collections/archetypes/records?perPage=20&expand=tools';
-
-            function fetchWithTimeout(url, ms) {
-                return new Promise(function(resolve, reject) {
-                    var timer = setTimeout(function() { reject(new Error('timeout')); }, ms);
-                    fetch(url).then(function(r) {
-                        clearTimeout(timer);
-                        if (!r.ok) reject(new Error(r.status));
-                        else resolve(r.json());
-                    }).catch(function(err) {
-                        clearTimeout(timer);
-                        reject(err);
-                    });
-                });
-            }
 
             return Promise.all([
                 fetchWithTimeout(toolsUrl, 5000),
@@ -1807,6 +1897,12 @@
             });
         }
 
+        function fetchData() {
+            if (!window.fetch) return Promise.reject('No fetch');
+            if (DATA_SOURCE === 'api') return fetchFromPocketBase();
+            return fetchFromStatic();
+        }
+
         /* ========================================
            INIT
            ======================================== */
@@ -1826,17 +1922,18 @@
             // Responsive heatmap
             window.addEventListener('resize', checkMobileHeatmap);
 
-            // Try to load data from PocketBase, then render UI
+            // Try to load data, then render UI
             function renderUI() {
                 renderArchetypes();
                 initSearch();
                 parseURLParams();
             }
 
-            fetchFromAPI().then(renderUI).catch(function() {
-                // API unavailable — use embedded fallback data
+            fetchData().then(renderUI).catch(function() {
+                // Static/API unavailable — use embedded fallback data
                 TOOLS = TOOLS_FALLBACK;
                 ARCHETYPES = ARCHETYPES_FALLBACK;
+                console.log('TechFreedom: Using embedded fallback data');
                 renderUI();
             });
         }
